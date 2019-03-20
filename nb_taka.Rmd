@@ -3,9 +3,83 @@ title: "R Notebook"
 output: html_notebook
 ---
 
+```{r}
+library(readxl)
+library(janitor)
+library(tidyverse)
+library(dplyr)
+library(lubridate)
+library(forcats)
+
+base1_taka_stat_fc <- read_excel("data/base1_taka_stat_fc.xlsx")
+bd1 <- base1_taka_stat_fc 
+
+```
+
  
-Notebooktaka
+
+                                                              DATA MANAGEMENT
+NOMS DES VARIABLES
+```{r}
+bd1 <- clean_names(bd1)
+bd1 <- bd1 %>% rename(
+  symptomes_m6 = "symtomes_m6",
+  symptomes_m12 = "sympt_m12",
+  symptomes_m18 = "az_4_symtomes_m18",
+  symptomes_3_ans = "symptomes_3_ans",
+  symptomes_end = "sympt_af_mes_residuels_end",
+  score_nih_m6  = "score_nih_2_m6",
+  score_nih_m12 = "score_nih_3_m12",
+  score_nih_m18 = "score_nih_4_m18",
+  score_nih_3_ans = "score_nih_5_3_ans",
+  score_nih_end = "score_nih_8_end",
+  crp_m6 = "crp_3_m6",
+  crp_m12 = "crp_4_m12",
+  crp_m18 = "crp_5_m18",
+  crp_3_ans = "crp_6_3_ans",
+  radio_end = "radio_ddn",
+  dose_pred_mgj_j0 = "dose_j0_mg_j",
+  dose_pred_mgj_m3 = "dose_prednisone_m3",
+  dose_pred_mgj_m6 = "dose_prednisone_1_m6",
+  dose_pred_mgj_m12 = "dose_prednisone_2_m12",
+  dose_pred_mgj_m18 = "dose_prednisone_3_m18",
+  dose_pred_mgj_3_ans = "dose_prednisone_4_3_ans",
+  dose_pred_mgj_end = "dose_prednisone_mg_j_end"
+)
+  
+glimpse(bd1)
+```
+
+MODIFICATION VALEURS ABERRANTES
 ```{r}
 
 ```
 
+FORMAT
+```{r}
+# DATE
+
+bd1 <- bd1 %>% mutate_at (vars(date_derniere_nouvelle, date_diag_taka, date_j0, date_fin_ligne_therapeutique, date_geste1, date_geste2, date_geste3, date_geste_4, date_geste_5, date_geste_6, date_1_rechute_1, date_2_rechute_2, date_3_rechute_2, date_complication_na_1, date_complication_na_2, date_derniere_nouvelle_1, ddn ), ymd)
+# bd1 %>% select(contains("date")) %>% glimpse()
+
+# NUMERIQUE
+bd1 <- bd1 %>% mutate_at(vars(poids_diag), as.numeric)
+
+# FACTEUR
+bd1 <- bd1 %>% mutate_at(vars(type_bioth_j0, type_bioth_m3, type_bioth_m6, type_bioth_m12, type_bioth_m18, type_bioth_3_ans, type_bioth_end), as.factor)
+```
+
+MODIFICATION MESURE DE VARIABLES, REGROUPEMENT DE NIVEAUX, NOUVELLES VARIABLES ...
+```{r}
+#  niveaux des type_bioth a mdifier
+```
+
+CREATION DE VARIABLES POUR LES ANALYSES FUTURES
+```{r}
+
+```
+
+RESTRICTION BASE DE DONNEES
+```{r}
+
+```
