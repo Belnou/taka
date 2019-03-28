@@ -25,7 +25,7 @@ bd_fup <- base1_fup
 bd_traitement <-  base1_traitement
 
 #bd1 %>% select(contains("nih")) %>% colnames
-
+2+2
 ```
 
 
