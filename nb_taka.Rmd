@@ -24,7 +24,8 @@ bd_covariables <- base1_covariables
 bd_fup <- base1_fup
 bd_traitement <-  base1_traitement
 
-bd1 %>% select(contains("nih")) %>% colnames
+#bd1 %>% select(contains("nih")) %>% colnames
+
 ```
 
 
