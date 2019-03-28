@@ -24,9 +24,11 @@ bd_covariables <- base1_covariables
 bd_fup <- base1_fup
 bd_traitement <-  base1_traitement
 
-#bd1 %>% select(contains("nih")) %>% colnames
-2+2
-4+4
+#Suffixe propr à chaque base de donnee sauf pour bd1(=pas de suffixe)
+bd_traitement <- bd_traitement  %>% rename_at(vars(colnames(bd_traitement[,!colnames(bd_traitement) %in% c("n")])),function(x) paste0(x,"_ttt"))
+bd_covariables <- bd_covariables %>% rename_at(vars(colnames(bd_covariables[,!colnames(bd_covariables) %in% c("n")])),function(x) paste0(x,"_cov"))
+bd_fup <-  bd_fup %>%  rename_at(vars(colnames(bd_fup[,!colnames(bd_fup) %in% c("n")])),function(x) paste0(x,"_fup"))
+bd_baseline <- bd_baseline %>% rename_at(vars(colnames(bd_baseline[,!colnames(bd_baseline) %in% c("N")])),function(x) paste0(x,"_baseline"))
 ```
 
 
@@ -52,10 +54,9 @@ bd1 <- bd1 %>% rename(
   dose_pred_mgj_m12 = "dose_prednisone_m12",
   dose_pred_mgj_m18 = "dose_prednisone_m18",
   dose_pred_mgj_3_ans = "dose_prednisone_3_ans",
-  dose_pred_mgj_end = "dose_prednisone_mg_j_end"
+  dose_pred_mgj_end = "dose_prednisone_mg_j_end",
+  date_naissance = "ddn"
 )
-  
-names(bd1)
 ```
 
 MODIFICATION VALEURS ABERRANTES
@@ -63,12 +64,12 @@ MODIFICATION VALEURS ABERRANTES
 
 ```
 
-FORMAT
+FORMAT DES VARIABLES
 ```{r}
 # DATE
 
-bd1 <- bd1 %>% mutate_at (vars(date_derniere_nouvelle, date_diag_taka, date_j0, date_fin_ligne_therapeutique, date_geste1, date_geste2, date_geste3, date_geste_4, date_geste_5, date_geste_6, date_1_rechute_1, date_2_rechute_2, date_3_rechute_2, date_complication_na_1, date_complication_na_2, date_derniere_nouvelle_1, ddn ), ymd)
-# bd1 %>% select(contains("date")) %>% glimpse()
+bd1 <- bd1 %>% mutate_at (vars(date_derniere_nouvelle,date_naissance , date_diag_taka, date_j0, date_fin_ligne_therapeutique, date_geste1, date_geste2, date_geste3, date_geste_4, date_geste_5, date_geste_6, date_rechute_1, date_rechute_2, date_complication_n_1, date_complication_n_2, date_derniere_nouvelle_1 ), ymd)
+
 
 # NUMERIQUE
 bd1 <- bd1 %>% mutate_at(vars(poids_diag), as.numeric)
@@ -82,12 +83,38 @@ MODIFICATION MESURE DE VARIABLES, REGROUPEMENT DE NIVEAUX, NOUVELLES VARIABLES .
 #  niveaux des type_bioth a mdifier
 ```
 
+CREATION D'UNE BASE DE DONNEE QUI MERGE LES VARIABLES D'INTERET 
+```{r}
+mabase<-cbind(bd1[,c("n","date_derniere_nouvelle","date_diag_taka", "date_j0", "date_fin_ligne_therapeutique", "ligne_en_cours", "num_ligne", "arret_ligne_remissoin_1_echec_0", "date_geste1", "date_geste2", "date_rechute_1", "date_rechute_2", "date_complication_n_1", "date_complication_n_2")], bd_traitement[,c("date_j0_ttt", "date_fin_ligne_therapeutique_ttt", "num_ligne_ttt", "date_derniere_nouvelle_ttt")])
+```
+
+
 CREATION DE VARIABLES POUR LES ANALYSES FUTURES
 ```{r}
 
 ```
 
-RESTRICTION BASE DE DONNEES
+
+Pour chaque ligne therapetique, duree jusqu'au premier geste vasculaire
 ```{r}
+mabase <- mabase %>% 
+  mutate(
+    date_fin_ligne_therapeutique = case_when(
+      is.na(date_fin_ligne_therapeutique) ~ date_derniere_nouvelle,
+      TRUE~date_fin_ligne_therapeutique
+    )
+  )
+
+mabase [-which(mabase$date_fin_ligne_therapeutique==mabase$date_fin_ligne_therapeutique_ttt), c("n","num_ligne", "date_fin_ligne_therapeutique","date_fin_ligne_therapeutique_ttt", "date_derniere_nouvelle")]
+
+bd1 %>% select(n, date_fin_ligne_therapeutique, num_ligne ) %>% filter(n %in% c("11","22", "28", "29" ))
+
+bd_traitement %>% select(n, date_fin_ligne_therapeutique_ttt, num_ligne_ttt, date_derniere_nouvelle_ttt ) %>% filter(n %in% c("11","22", "28", "29" ))
+
+date_inco <- cbind(bd1[,c("n","num_ligne","date_fin_ligne_therapeutique","date_derniere_nouvelle")], bd_traitement[,c("date_fin_ligne_therapeutique_ttt", "date_derniere_nouvelle_ttt")])
+
+a <- date_inco %>% filter(n %in% c("16","52","11","22","28","29"))
+write.table(a,"a.csv", row.names = FALSE, sep ="*", dec=",", na=" ")
 
 ```
+
