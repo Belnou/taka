@@ -1,0 +1,123 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(readxl)
+library(janitor)
+library(tidyverse)
+library(dplyr)
+library(lubridate)
+library(forcats)
+
+base1_taka_stat_fc <- read_excel("data/base1_taka_stat_fc.xlsx")
+base1_baseline <- read_excel("data/base1_baseline.xlsx")
+base1_covariables <- read_excel("data/base1_covariables.xlsx")
+base1_fup <- read_excel("data/base1_fup.xlsx")
+base1_traitement <- read_excel("data/base1_traitement.xlsx")
+
+
+bd1 <- base1_taka_stat_fc
+bd_baseline <- base1_baseline
+bd_covariables <- base1_covariables
+bd_fup <- base1_fup
+bd_traitement <-  base1_traitement
+
+#Suffixe propr à chaque base de donnee sauf pour bd1(=pas de suffixe)
+bd_traitement <- bd_traitement  %>% rename_at(vars(colnames(bd_traitement[,!colnames(bd_traitement) %in% c("n")])),function(x) paste0(x,"_ttt"))
+bd_covariables <- bd_covariables %>% rename_at(vars(colnames(bd_covariables[,!colnames(bd_covariables) %in% c("n")])),function(x) paste0(x,"_cov"))
+bd_fup <-  bd_fup %>%  rename_at(vars(colnames(bd_fup[,!colnames(bd_fup) %in% c("n")])),function(x) paste0(x,"_fup"))
+bd_baseline <- bd_baseline %>% rename_at(vars(colnames(bd_baseline[,!colnames(bd_baseline) %in% c("N")])),function(x) paste0(x,"_baseline"))
+
+# taka a jour
+
+```
+
+
+                                                              DATA MANAGEMENT
+NOMS DES VARIABLES
+```{r}
+bd1 <- clean_names(bd1)
+bd1 <- bd1 %>% rename(
+  symptomes_m6 = "symtomes_m6",
+  symptomes_m12 = "sympt_m12",
+  symptomes_m18 = "az_symtomes_m18",
+  symptomes_3_ans = "symptomes_3_ans",
+  symptomes_end = "sympt_af_mes_residuels_end",
+  score_nih_m3 = "nih_a_m3",
+  score_nih_m6  = "score_nih_m6",
+  score_nih_m12 = "score_nih_m12",
+  score_nih_m18 = "score_nih_m18",
+  score_nih_3_ans = "score_nih_3_ans",
+  radio_end = "radio_ddn",
+  dose_pred_mgj_j0 = "dose_j0_mg_j",
+  dose_pred_mgj_m3 = "dose_prednisone_m3",
+  dose_pred_mgj_m6 = "dose_prednisone_m6",
+  dose_pred_mgj_m12 = "dose_prednisone_m12",
+  dose_pred_mgj_m18 = "dose_prednisone_m18",
+  dose_pred_mgj_3_ans = "dose_prednisone_3_ans",
+  dose_pred_mgj_end = "dose_prednisone_mg_j_end",
+  date_naissance = "ddn"
+)
+```
+
+MODIFICATION VALEURS ABERRANTES
+```{r}
+
+```
+
+FORMAT DES VARIABLES
+```{r}
+# DATE
+
+bd1 <- bd1 %>% mutate_at (vars(date_derniere_nouvelle,date_naissance , date_diag_taka, date_j0, date_fin_ligne_therapeutique, date_geste1, date_geste2, date_geste3, date_geste_4, date_geste_5, date_geste_6, date_rechute_1, date_rechute_2, date_complication_n_1, date_complication_n_2, date_derniere_nouvelle_1 ), ymd)
+
+
+# NUMERIQUE
+bd1 <- bd1 %>% mutate_at(vars(poids_diag), as.numeric)
+
+# FACTEUR
+bd1 <- bd1 %>% mutate_at(vars(type_bioth_j0, type_bioth_m3, type_bioth_m6, type_bioth_m12, type_bioth_m18, type_bioth_3_ans, type_bioth_end), as.factor)
+```
+
+MODIFICATION MESURE DE VARIABLES, REGROUPEMENT DE NIVEAUX, NOUVELLES VARIABLES ...
+```{r}
+#  niveaux des type_bioth a mdifier
+```
+
+CREATION D'UNE BASE DE DONNEE QUI MERGE LES VARIABLES D'INTERET 
+```{r}
+mabase<-cbind(bd1[,c("n","date_derniere_nouvelle","date_diag_taka", "date_j0", "date_fin_ligne_therapeutique", "ligne_en_cours", "num_ligne", "arret_ligne_remissoin_1_echec_0", "date_geste1", "date_geste2", "date_rechute_1", "date_rechute_2", "date_complication_n_1", "date_complication_n_2")], bd_traitement[,c("date_j0_ttt", "date_fin_ligne_therapeutique_ttt", "num_ligne_ttt", "date_derniere_nouvelle_ttt")])
+```
+
+
+CREATION DE VARIABLES POUR LES ANALYSES FUTURES
+```{r}
+
+```
+
+
+Pour chaque ligne therapetique, duree jusqu'au premier geste vasculaire
+```{r}
+mabase <- mabase %>% 
+  mutate(
+    date_fin_ligne_therapeutique = case_when(
+      is.na(date_fin_ligne_therapeutique) ~ date_derniere_nouvelle,
+      TRUE~date_fin_ligne_therapeutique
+    )
+  )
+
+mabase [-which(mabase$date_fin_ligne_therapeutique==mabase$date_fin_ligne_therapeutique_ttt), c("n","num_ligne", "date_fin_ligne_therapeutique","date_fin_ligne_therapeutique_ttt", "date_derniere_nouvelle")]
+
+bd1 %>% select(n, date_fin_ligne_therapeutique, num_ligne ) %>% filter(n %in% c("11","22", "28", "29" ))
+
+bd_traitement %>% select(n, date_fin_ligne_therapeutique_ttt, num_ligne_ttt, date_derniere_nouvelle_ttt ) %>% filter(n %in% c("11","22", "28", "29" ))
+
+date_inco <- cbind(bd1[,c("n","num_ligne","date_fin_ligne_therapeutique","date_derniere_nouvelle")], bd_traitement[,c("date_fin_ligne_therapeutique_ttt", "date_derniere_nouvelle_ttt")])
+
+a <- date_inco %>% filter(n %in% c("16","52","11","22","28","29"))
+write.table(a,"a.csv", row.names = FALSE, sep ="*", dec=",", na=" ")
+
+```
+
