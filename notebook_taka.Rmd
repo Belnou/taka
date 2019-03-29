@@ -24,9 +24,7 @@ bd_covariables <- base1_covariables
 bd_fup <- base1_fup
 bd_traitement <-  base1_traitement
 
-#bd1 %>% select(contains("nih")) %>% colnames
-2+2
-4+4
+bd1 %>% select(contains("nih")) %>% colnames
 ```
 
 
@@ -65,9 +63,10 @@ MODIFICATION VALEURS ABERRANTES
 
 FORMAT
 ```{r}
+bd1 %>% select(contains("date")) %>% glimpse()
 # DATE
 
-bd1 <- bd1 %>% mutate_at (vars(date_derniere_nouvelle, date_diag_taka, date_j0, date_fin_ligne_therapeutique, date_geste1, date_geste2, date_geste3, date_geste_4, date_geste_5, date_geste_6, date_1_rechute_1, date_2_rechute_2, date_3_rechute_2, date_complication_na_1, date_complication_na_2, date_derniere_nouvelle_1, ddn ), ymd)
+bd1 <- bd1 %>% mutate_at (vars(date_derniere_nouvelle, date_diag_taka, date_j0, date_fin_ligne_therapeutique, date_geste1, date_geste2, date_geste3, date_geste_4, date_geste_5, date_geste_6, date_rechute_1, date_rechute_2, date_3_rechute_2, date_complication_na_1, date_complication_na_2, date_derniere_nouvelle_1, ddn ), ymd)
 # bd1 %>% select(contains("date")) %>% glimpse()
 
 # NUMERIQUE
