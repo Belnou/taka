@@ -71,7 +71,7 @@ FORMAT DES VARIABLES
 ```{r}
 # DATE
 
-bd1 <- bd1 %>% mutate_at (vars(date_derniere_nouvelle,date_naissance , date_diag_taka, date_j0, date_fin_ligne_therapeutique, date_geste1, date_geste2, date_geste3, date_geste_4, date_geste_5, date_geste_6, date_rechute_1, date_rechute_2, date_complication_n_1, date_complication_n_2, date_derniere_nouvelle_1 ), ymd)
+bd1 <- bd1 %>% mutate_at (vars(date_derniere_nouvelle,date_naissance , date_diag_taka, date_j0, date_fin_ligne_therapeutique, date_geste1, date_geste2, date_geste3, date_geste_4, date_geste_5, date_geste_6, date_rechute_1, date_rechute_2, date_complication_n_1, date_complication_n_2, date_derniere_nouvelle_inutil ), ymd)
 
 
 # NUMERIQUE
@@ -98,8 +98,8 @@ CREATION DE VARIABLES POUR LES ANALYSES FUTURES
 ```
 
 
-Pour chaque ligne therapetique, duree jusqu'au premier geste vasculaire
-```{r}
+Verification des diverses dates
+```{r, eval=FALSE}
 mabase <- mabase %>% 
   mutate(
     date_fin_ligne_therapeutique = case_when(
@@ -107,6 +107,9 @@ mabase <- mabase %>%
       TRUE~date_fin_ligne_therapeutique
     )
   )
+
+bd1 %>% select(contains("date_der"))
+mabase %>% filter(n=="29")
 
 mabase [-which(mabase$date_fin_ligne_therapeutique==mabase$date_fin_ligne_therapeutique_ttt), c("n","num_ligne", "date_fin_ligne_therapeutique","date_fin_ligne_therapeutique_ttt", "date_derniere_nouvelle")]
 
@@ -118,6 +121,23 @@ date_inco <- cbind(bd1[,c("n","num_ligne","date_fin_ligne_therapeutique","date_d
 
 a <- date_inco %>% filter(n %in% c("16","52","11","22","28","29"))
 write.table(a,"a.csv", row.names = FALSE, sep ="*", dec=",", na=" ")
+
+```
+
+Analyse effet des statines
+-rechute et/ou
+-dose de corticoïde et/ou
+-recours aux IS
+- complications vasculaires
+-gestes vasculaire
+```{r}
+bd1 %>% select(contains("is"))
+date_rechute_1
+date_rechute_2
+
+bd_traitement %>% select(contains("prednisone")) %>% colnames
+bd_traitement %>% select(contains("is_")) %>% colnames
+
 
 ```
 
