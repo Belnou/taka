@@ -73,6 +73,8 @@ FORMAT DES VARIABLES
 
 bd1 <- bd1 %>% mutate_at (vars(date_derniere_nouvelle,date_naissance , date_diag_taka, date_j0, date_fin_ligne_therapeutique, date_geste1, date_geste2, date_geste3, date_geste_4, date_geste_5, date_geste_6, date_rechute_1, date_rechute_2, date_complication_n_1, date_complication_n_2, date_derniere_nouvelle_inutil ), ymd)
 
+bd_traitement <- bd_traitement %>% mutate_at (vars( date_naissance_ttt, date_j0_ttt, date_fin_ligne_therapeutique_ttt ), ymd)
+
 
 # NUMERIQUE
 bd1 <- bd1 %>% mutate_at(vars(poids_diag), as.numeric)
@@ -83,12 +85,65 @@ bd1 <- bd1 %>% mutate_at(vars(type_bioth_j0, type_bioth_m3, type_bioth_m6, type_
 
 MODIFICATION MESURE DE VARIABLES, REGROUPEMENT DE NIVEAUX, NOUVELLES VARIABLES ...
 ```{r}
-#  niveaux des type_bioth a mdifier
+#  geste quand presence date de geste
+bd1 <- bd1 %>%
+  mutate(geste_1 = case_when(
+    !is.na(date_geste1) ~ 1,
+    TRUE ~ 0
+  ),
+  geste_2 = case_when(
+    !is.na(date_geste2) ~ 1,
+    TRUE ~ 0
+  ),
+    geste_3 = case_when(
+    !is.na(date_geste3) ~ 1,
+    TRUE ~ 0
+  ),
+  geste_4 = case_when(
+    !is.na(date_geste_4) ~ 1,
+    TRUE ~ 0
+  ),
+  geste_5 = case_when(
+    !is.na(date_geste_5) ~ 1,
+    TRUE ~ 0
+  ),
+  geste_6 = case_when(
+    !is.na(date_geste_6) ~ 1,
+    TRUE ~ 0
+  )
+  )
+
+#  rechute quand presence date de rechute
+bd1 <- bd1 %>%
+  mutate(rechute_1 = case_when(
+    !is.na(date_rechute_1) ~ 1,
+    TRUE ~ 0
+  ),
+  rechute_2 = case_when(
+    !is.na(date_rechute_2) ~ 1,
+    TRUE ~ 0
+  )
+  )
+
+#  complication quand presence date de complication
+bd1 <- bd1 %>%
+  mutate(complication_1 = case_when(
+    !is.na(date_complication_n_1) ~ 1,
+    TRUE ~ 0
+  ),
+  complication_2 = case_when(
+    !is.na(date_complication_n_2) ~ 1,
+    TRUE ~ 0
+  )
+  )
+
 ```
 
 CREATION D'UNE BASE DE DONNEE QUI MERGE LES VARIABLES D'INTERET 
 ```{r}
-mabase<-cbind(bd1[,c("n","date_derniere_nouvelle","date_diag_taka", "date_j0", "date_fin_ligne_therapeutique", "ligne_en_cours", "num_ligne", "arret_ligne_remissoin_1_echec_0", "date_geste1", "date_geste2", "date_rechute_1", "date_rechute_2", "date_complication_n_1", "date_complication_n_2")], bd_traitement[,c("date_j0_ttt", "date_fin_ligne_therapeutique_ttt", "num_ligne_ttt", "date_derniere_nouvelle_ttt")])
+mabase<-cbind(
+  bd1[,c("n","date_derniere_nouvelle","date_diag_taka", "date_j0", "date_fin_ligne_therapeutique", "ligne_en_cours", "num_ligne", "arret_ligne_remissoin_1_echec_0", "date_geste1", "date_geste2", "date_rechute_1", "date_rechute_2", "date_complication_n_1", "date_complication_n_2")], 
+  bd_traitement[,c("date_j0_ttt", "date_fin_ligne_therapeutique_ttt", "num_ligne_ttt", "date_derniere_nouvelle_ttt")])
 ```
 
 
@@ -98,8 +153,65 @@ CREATION DE VARIABLES POUR LES ANALYSES FUTURES
 ```
 
 
-Verification des diverses dates
+Verification des diverses dates  --> Pour le moment laisser de côté
 ```{r, eval=FALSE}
+
+# Verif incoherence des dates
+bd_traitement %>% select(n, num_ligne_ttt, date_fin_ligne_therapeutique_ttt, date_j0_ttt ) %>% mutate(duree_traitement = as.integer(date_fin_ligne_therapeutique_ttt - date_j0_ttt)) %>% filter(duree_traitement<0 | is.na(duree_traitement))
+
+# Verifications coherence date de debut et date de fin de ligne therapeutique
+vars <- c("annee_fin","mois_fin", "jour_fin","annee_j0","mois_j0", "jour_j0", "duree_traitement" )
+
+bdtt <- bd_traitement  %>% select(n, num_ligne_ttt, date_fin_ligne_therapeutique_ttt, date_j0_ttt ) %>% 
+  filter(n!=16 & n!=52)  %>% mutate(duree_traitement = as.integer(date_fin_ligne_therapeutique_ttt - date_j0_ttt)) %>%
+  mutate_at(vars(date_fin_ligne_therapeutique_ttt,date_j0_ttt ), as.character) %>%
+  separate(date_fin_ligne_therapeutique_ttt, into = c("annee_fin","mois_fin", "jour_fin"), sep = "-") %>% 
+    separate(date_j0_ttt, into = c("annee_j0","mois_j0", "jour_j0"), sep = "-") %>% 
+  mutate(num_ligne_ttt = case_when(
+    num_ligne_ttt==1~"ligne_1",
+    num_ligne_ttt==2~"ligne_2",
+    num_ligne_ttt==3~"ligne_3",
+    num_ligne_ttt==4~"ligne_4",
+    num_ligne_ttt==5~"ligne_5",
+    TRUE~"exclure"
+    )) %>% 
+  unite(xxx, vars, sep=" ") %>% 
+  spread(num_ligne_ttt, xxx) %>% 
+  separate(ligne_1, str_c(vars, "_ligne_1", sep=c(""))) %>% 
+  separate(ligne_2, str_c(vars, "_ligne_2", sep=c(""))) %>%
+  separate(ligne_3, str_c(vars, "_ligne_3", sep=c(""))) %>% 
+  separate(ligne_4, str_c(vars, "_ligne_4", sep=c(""))) %>% 
+  separate(ligne_5, str_c(vars, "_ligne_5", sep=c(""))) %>% 
+  mutate(date_fin_ligne1 = str_c(annee_fin_ligne_1,mois_fin_ligne_1,jour_fin_ligne_1,sep="-"),
+         date_fin_ligne2 = str_c(annee_fin_ligne_2,mois_fin_ligne_2,jour_fin_ligne_2,sep="-"),
+         date_fin_ligne3 = str_c(annee_fin_ligne_3,mois_fin_ligne_3,jour_fin_ligne_3,sep="-"),
+         date_fin_ligne4 = str_c(annee_fin_ligne_4,mois_fin_ligne_4,jour_fin_ligne_4,sep="-"),
+         date_fin_ligne5 = str_c(annee_fin_ligne_5,mois_fin_ligne_5,jour_fin_ligne_5,sep="-"),
+         date_j0_ligne1 = str_c(annee_j0_ligne_1,mois_j0_ligne_1,jour_j0_ligne_1,sep="-"),
+         date_j0_ligne2 = str_c(annee_j0_ligne_2,mois_j0_ligne_2,jour_j0_ligne_2,sep="-"),
+         date_j0_ligne3 = str_c(annee_j0_ligne_3,mois_j0_ligne_3,jour_j0_ligne_3,sep="-"),
+         date_j0_ligne4 = str_c(annee_j0_ligne_4,mois_j0_ligne_4,jour_j0_ligne_4,sep="-"),
+         date_j0_ligne5 = str_c(annee_j0_ligne_5,mois_j0_ligne_5,jour_j0_ligne_5,sep="-"))%>% select(n,date_fin_ligne1, date_fin_ligne2, date_fin_ligne3, date_fin_ligne4, date_fin_ligne5,
+         date_j0_ligne1, date_j0_ligne2, date_j0_ligne3, date_j0_ligne4, date_j0_ligne5, duree_traitement_ligne_1, duree_traitement_ligne_2, duree_traitement_ligne_3, duree_traitement_ligne_4, duree_traitement_ligne_5)
+date_var <- bdtt %>% select(contains("date")) %>% colnames
+duree_var <- bdtt %>% select(contains("duree")) %>% colnames 
+bdtt <- bdtt  %>% mutate_at(vars(date_var), ymd) %>% mutate_at(vars(duree_var), as.integer)      
+# Verifications coherence date de debut et date de fin de ligne therapeutique
+bdtt <- bdtt %>% mutate(delai_1 = as.integer(date_j0_ligne2 - date_fin_ligne1),
+                delai_2 = as.integer(date_j0_ligne3 - date_fin_ligne2),
+                delai_3 = as.integer(date_j0_ligne4 - date_fin_ligne3),
+                delai_4 = as.integer(date_j0_ligne5 - date_fin_ligne4)
+)
+
+# --> la seule incoherence serait : 
+bdtt %>% filter(delai_1<0 | delai_2<0 | delai_3<0 | delai_4<0 ) %>% select(n , date_fin_ligne4, date_j0_ligne5, delai_4)
+
+                
+```
+
+
+```{r}
+
 mabase <- mabase %>% 
   mutate(
     date_fin_ligne_therapeutique = case_when(
@@ -108,8 +220,6 @@ mabase <- mabase %>%
     )
   )
 
-bd1 %>% select(contains("date_der"))
-mabase %>% filter(n=="29")
 
 mabase [-which(mabase$date_fin_ligne_therapeutique==mabase$date_fin_ligne_therapeutique_ttt), c("n","num_ligne", "date_fin_ligne_therapeutique","date_fin_ligne_therapeutique_ttt", "date_derniere_nouvelle")]
 
@@ -122,7 +232,18 @@ date_inco <- cbind(bd1[,c("n","num_ligne","date_fin_ligne_therapeutique","date_d
 a <- date_inco %>% filter(n %in% c("16","52","11","22","28","29"))
 write.table(a,"a.csv", row.names = FALSE, sep ="*", dec=",", na=" ")
 
+
+bd_traitement %>% filter(n==6)
+
 ```
+
+
+```{r}
+
+
+
+```
+
 
 Analyse effet des statines
 -rechute et/ou
@@ -131,13 +252,14 @@ Analyse effet des statines
 - complications vasculaires
 -gestes vasculaire
 ```{r}
-bd1 %>% select(contains("is"))
 date_rechute_1
 date_rechute_2
-
 bd_traitement %>% select(contains("prednisone")) %>% colnames
 bd_traitement %>% select(contains("is_")) %>% colnames
+bd1 %>% select(contains("compl")) %>% colnames
+bd1 %>% select(contains("gest")) %>% colnames
 
-
+bd1 %>% select(contains("compl"))
+  
 ```
 
