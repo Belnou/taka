@@ -10,6 +10,10 @@ library(tidyverse)
 library(dplyr)
 library(lubridate)
 library(forcats)
+library(purrr)
+library(broom)
+library(survminer)
+library(ggplot2)
 
 base1_taka_stat_fc <- read_excel("data/base1_taka_stat_fc.xlsx")
 base1_baseline <- read_excel("data/base1_baseline.xlsx")
@@ -34,6 +38,7 @@ bd_baseline <- bd_baseline %>% rename_at(vars(colnames(bd_baseline[,!colnames(bd
 
 ```
 
+patient n°16 à exclure ?
 
                                                               DATA MANAGEMENT
 NOMS DES VARIABLES
@@ -73,7 +78,7 @@ FORMAT DES VARIABLES
 
 bd1 <- bd1 %>% mutate_at (vars(date_derniere_nouvelle,date_naissance , date_diag_taka, date_j0, date_fin_ligne_therapeutique, date_geste1, date_geste2, date_geste3, date_geste_4, date_geste_5, date_geste_6, date_rechute_1, date_rechute_2, date_complication_n_1, date_complication_n_2, date_derniere_nouvelle_inutil ), ymd)
 
-bd_traitement <- bd_traitement %>% mutate_at (vars( date_naissance_ttt, date_j0_ttt, date_fin_ligne_therapeutique_ttt ), ymd)
+bd_traitement <- bd_traitement %>% mutate_at (vars( date_naissance_ttt, date_j0_ttt, date_fin_ligne_therapeutique_ttt, m3_ttt, m6_ttt, m12_ttt, m18_ttt, ans_3_ttt, date_derniere_nouvelle_ttt ), ymd)
 
 
 # NUMERIQUE
@@ -137,13 +142,6 @@ bd1 <- bd1 %>%
   )
   )
 
-```
-
-CREATION D'UNE BASE DE DONNEE QUI MERGE LES VARIABLES D'INTERET 
-```{r}
-mabase<-cbind(
-  bd1[,c("n","date_derniere_nouvelle","date_diag_taka", "date_j0", "date_fin_ligne_therapeutique", "ligne_en_cours", "num_ligne", "arret_ligne_remissoin_1_echec_0", "date_geste1", "date_geste2", "date_rechute_1", "date_rechute_2", "date_complication_n_1", "date_complication_n_2")], 
-  bd_traitement[,c("date_j0_ttt", "date_fin_ligne_therapeutique_ttt", "num_ligne_ttt", "date_derniere_nouvelle_ttt")])
 ```
 
 
@@ -210,7 +208,7 @@ bdtt %>% filter(delai_1<0 | delai_2<0 | delai_3<0 | delai_4<0 ) %>% select(n , d
 ```
 
 
-```{r}
+```{r, eval=FALSE}
 
 mabase <- mabase %>% 
   mutate(
@@ -237,29 +235,292 @@ bd_traitement %>% filter(n==6)
 
 ```
 
-
-```{r}
-
-
-
-```
-
-
 Analyse effet des statines
 -rechute et/ou
 -dose de corticoïde et/ou
 -recours aux IS
 - complications vasculaires
 -gestes vasculaire
-```{r}
+```{r,  eval=FALSE}
 date_rechute_1
 date_rechute_2
 bd_traitement %>% select(contains("prednisone")) %>% colnames
-bd_traitement %>% select(contains("is_")) %>% colnames
+bd_traitement %>% select(contains("aspi")) %>% colnames
 bd1 %>% select(contains("compl")) %>% colnames
-bd1 %>% select(contains("gest")) %>% colnames
+bd1 %>% select(contains("rech")) %>% colnames
 
-bd1 %>% select(contains("compl"))
-  
+bd1 %>% select(contains("aspi"))
 ```
 
+
+CREATION D'UNE BASE DE DONNEE QUI MERGE LES VARIABLES D'INTERET 
+```{r}
+var_bd1 <- bd1 %>% select(
+  n, date_derniere_nouvelle,date_diag_taka,
+  contains("compl"),
+  contains("gest"),
+  contains("rech")
+  
+)
+
+var_traitement <- bd_traitement %>% select(
+  num_ligne_ttt, date_j0_ttt, date_fin_ligne_therapeutique_ttt, m3_ttt, m6_ttt,m12_ttt,m18_ttt,ans_3_ttt, date_derniere_nouvelle_ttt, 
+  contains("prednisone"),
+  contains("is_"),
+  contains("stat"),
+  contains("aspi"),
+  contains("hta")
+  
+)
+
+mabase <- cbind(
+  var_bd1, 
+  var_traitement
+  )
+
+```
+
+
+```{r}
+
+```
+
+
+CREATION DE LA BASE de donné complete
+```{r rows.print=30}
+
+#mabase %>% mutate_at(vars(statine_j0_ttt, statine_m3_ttt), .funs = function(x){ifelse(is.na(x),0,x)}) %>% filter(n ==29) %>% select(n, num_ligne_ttt, statine_j0_ttt)
+
+# Selection des variables
+mabase <- mabase %>% 
+  select(n, num_ligne_ttt, date_j0_ttt, date_fin_ligne_therapeutique_ttt, statine_j0_ttt, m3_ttt, statine_m3_ttt, m6_ttt,statine_m6_ttt, m12_ttt, statine_m12_ttt, m18_ttt, statine_m18_ttt, ans_3_ttt, statine_3_ans_ttt, date_derniere_nouvelle_ttt, rechute_1, date_rechute_1, rechute_2, date_rechute_2, contains("prednisone"),contains("is_"),contains("compl"),contains("gest"), contains("aspi"), contains("hta") )
+  
+# Presence statine et la date du premier statine qui apparait dans la ligne therapeutique  
+mabase <- mabase %>%  
+  mutate(presence_statine =  pmax(statine_j0_ttt ,statine_m3_ttt,statine_m6_ttt,statine_m12_ttt,statine_m18_ttt, statine_3_ans_ttt, na.rm=T)) %>% 
+  mutate(presence_statine = ifelse(is.na(presence_statine),0,presence_statine)) %>% 
+  
+  mutate(date_statine_J0 = ymd(case_when(
+    statine_j0_ttt==1~ date_j0_ttt
+  ))) %>% 
+    mutate(date_statine_m3 = ymd(case_when(
+    statine_m3_ttt==1~ m3_ttt
+  ))) %>%
+    mutate(date_statine_m6 = ymd(case_when(
+    statine_m6_ttt==1~ m6_ttt
+  ))) %>%
+    mutate(date_statine_m12 = ymd(case_when(
+    statine_m12_ttt==1~ m12_ttt
+  ))) %>%
+    mutate(date_statine_m18 = ymd(case_when(
+    statine_m18_ttt==1~ m18_ttt
+  ))) %>%
+    mutate(date_statine_3ans = ymd(case_when(
+    statine_3_ans_ttt==1~ ans_3_ttt
+  ))) %>%
+  
+  mutate(date_premiere_statine = pmin(date_statine_J0,date_statine_m3,date_statine_m6,date_statine_m12,date_statine_m18,date_statine_3ans, na.rm=TRUE))
+ 
+# Presence prednisone dans la ligne th
+mabase <- mabase %>%  
+  mutate(presence_prednisone =  pmax(prednisone_j0_ttt ,prednisone_m3_ttt, prednisone_m6_ttt,prednisone_m12_ttt, prednisone_m18_ttt, prednisone_3_ans_ttt, na.rm=T)) %>% 
+  mutate(presence_prednisone = ifelse(is.na(presence_prednisone),0,presence_prednisone))
+
+# Presence is dans la ligne th
+mabase <- mabase %>%  
+  mutate(presence_is =  pmax(is_j0_ttt ,is_m3_ttt, is_m6_ttt ,is_m12_ttt, is_m18_ttt, is_3_ans_ttt, na.rm=T)) %>% 
+  mutate(presence_prednisone = ifelse(is.na(presence_is),0,presence_is))
+
+# Presence aspirine dans la ligne th
+mabase <- mabase %>%  
+  mutate(presence_aspirine =  pmax(aspirine_j0_ttt ,aspirine_m3_ttt, aspirine_m6_ttt ,aspirine_m12_ttt, aspirine_m18_ttt, aspirine_3_ans_ttt, na.rm=T)) %>% 
+  mutate(presence_aspirine = ifelse(is.na(presence_aspirine),0,presence_aspirine))
+
+# Presence anti_hta dans la ligne th
+mabase <- mabase %>%  
+  mutate(
+    antihta_j0_ttt = ifelse(nombre_anti_hta_j0_ttt>0,1,0),
+    antihta_m3_ttt = ifelse(nombre_anti_hta_m3_ttt>0,1,0),
+    antihta_m6_ttt = ifelse(nombre_antihta_m6_ttt>0,1,0),
+    antihta_m12_ttt = ifelse(nombre_antihta_m12_ttt>0,1,0),
+    antihta_m18_ttt = ifelse(nombre_antihta_m18_ttt>0,1,0),
+    antihta_3_ans_ttt = ifelse(nombre_antihta_3_ans_ttt>0,1,0)) %>% 
+  
+  mutate(presence_antihta =  pmax(antihta_j0_ttt ,antihta_m3_ttt, antihta_m6_ttt ,antihta_m12_ttt, antihta_m18_ttt, antihta_3_ans_ttt, na.rm=T)) %>% 
+  mutate(presence_antihta = ifelse(is.na(presence_antihta),0,presence_antihta))
+
+essai <- mabase %>% select(n, num_ligne_ttt, contains("aspir")) %>% filter(presence_aspirine==0) %>% filter(aspirine_end_ttt>0)
+suum<- function(x){sum(x, na.rm=TRUE)}
+map_dbl(essai, (suum))
+
+rm(essai)
+
+mabase %>% filter(n %in% c("19", "42", "44")) %>% select(n, num_ligne_ttt, contains("aspir")) %>% filter(num_ligne_ttt==3)
+```
+
+
+Prendre un traitement par statine diminu les complications vasculaires
+```{r }
+verif_complic <- bd_statine %>% select(n, num_ligne_ttt, date_j0_ttt, date_fin_ligne_therapeutique_ttt, complication_1, date_complication_n_1, complication_2, date_complication_n_2) %>% arrange(n, num_ligne_ttt) %>% 
+  filter(complication_1==1 | complication_2==1)
+
+write.table(verif_complic,"verif_complic.csv", row.names = FALSE, sep ="*", dec=",", na=" ")
+```
+
+Prendre un traitement par statine diminu les complications vasculaires
+
+```{r}
+library(compareGroups)
+bd_statine$presence_statine <- as.factor(bd_statine$presence_statine)
+baselines <- compareGroups(presence_statine ~ dose_prednisone_end_ttt+rechute_1, data = bd_statine, include.miss = F )
+createTable(baselines, show.ratio = FALSE, show.p.overall = FALSE)
+
+names(bd_statine)
+bd_statine$presence_statine)
+
+bd_statine %>% 
+  group_by(presence_statine) %>% 
+  summarise(
+    n = n(),
+    moyenne = round(mean (dose_prednisone_end_ttt, na.rm=TRUE),4),
+    sd = round(sd (dose_prednisone_end_ttt, na.rm=TRUE),4),
+  )
+
+```
+
+
+
+
+SURVIE avec statine= VARIABLE DEPENDANTES DU TEMPS
+base de donnees = bd_stat
+```{r eval=FALSE}
+
+bd_statine_1 <- bd_statine %>% mutate(periode=factor("1"))
+bd_statine_2 <- bd_statine_1[which(bd_statine_1$presence_statine==1),]  
+bd_statine_2 <- bd_statine_2  %>% mutate(periode = factor("2"))  
+bd_stat <- base::rbind(bd_statine_1, bd_statine_2)   
+
+  
+bd_stat <- bd_stat %>%
+  mutate(date_start = case_when(
+    periode == "1" ~ date_j0_ttt,
+    periode == "2" ~ date_premiere_statine
+  )) %>% 
+   mutate(date_end = case_when(
+    periode == "2" & rechute_1==1  ~ date_rechute_1,
+    periode == "2" & rechute_1==0 & !is.na(date_fin_ligne_therapeutique_ttt) ~ date_fin_ligne_therapeutique_ttt,
+    periode == "2" & rechute_1==0 & is.na(date_fin_ligne_therapeutique_ttt)  ~ date_derniere_nouvelle_ttt,
+    periode == "1" & presence_statine==1  ~ date_premiere_statine,
+    periode == "1" & presence_statine==0 & rechute_1==1  ~ date_rechute_1,
+    periode == "1" & presence_statine==0 & rechute_1==0 & !is.na(date_fin_ligne_therapeutique_ttt) ~ date_fin_ligne_therapeutique_ttt,
+    periode == "1" & presence_statine==0 & rechute_1==0 & is.na(date_fin_ligne_therapeutique_ttt) ~ date_derniere_nouvelle_ttt)
+    ) %>% 
+      mutate(time1 = as.integer(case_when(
+      presence_statine ==1 & periode == "2" ~ date_premiere_statine - date_j0_ttt))) %>% 
+    mutate(time1 = case_when(
+      presence_statine ==1 & periode == "2"~ time1,
+      TRUE ~0L
+      )
+    ) %>% 
+    mutate(time2 = as.integer(case_when(
+      presence_statine ==1 & periode == "1" ~ date_premiere_statine - date_j0_ttt,
+      presence_statine ==1 & periode == "2" ~ date_end - date_premiere_statine,
+      presence_statine ==0 ~ date_end - date_j0_ttt))) %>% 
+    mutate(time3 = case_when(
+    time1 == 0 ~ time2,
+    time1 != 0 ~ time1 + time2)) %>% 
+    mutate(event = case_when(
+         presence_statine ==1 & periode == "1" ~ 0L,
+         presence_statine ==1 & periode == "2" ~ as.integer(as.character(rechute_1)),
+         presence_statine ==0 ~ as.integer(as.character(rechute_1))
+         )) %>% 
+    mutate(time1=round(time1/30.45, digits=1),
+         time2=round(time2/30.45, digits=1),
+         time3=round(time3/30.45, digits=1)) %>% 
+    mutate(statut_statine = case_when(
+    presence_statine ==1 & periode == "1"~ 0L,
+    presence_statine ==1 & periode == "2"~ 1L,
+    presence_statine ==0 ~ 0L
+  )) %>% 
+    mutate(
+    time4 = 0,
+    time5 = time2
+  )
+    
+
+  
+# Pour le moment exclure comme ça les patients 16 et 52
+bd_stat <- bd_stat %>% filter(n != 16 & n!=52)  
+map_dbl(map(bd_stat,is.na), sum)
+
+
+
+library(survival)
+bd_stat  <- bd_stat  %>% mutate (statut_statine = as.factor(statut_statine))
+mod <- coxph(Surv(time4, time5, event)~ statut_statine , data = bd_stat)
+mod %>%
+  tidy() %>%
+  mutate(
+    HR = exp(estimate),
+    lower_95 = exp(conf.low),
+    upper_95 = exp(conf.high )
+  ) %>% 
+  select (term, estimate, HR, lower_95, upper_95, p.value) %>%
+  mutate_at(vars(estimate, HR, lower_95, upper_95,p.value ), function(x) round(x, 4))
+
+
+fit <- survfit(Surv(time5, event) ~ statut_statine, data = bd_stat)
+
+ggsurvplot(fit, 
+           surv.median.line = "hv",
+           xlab="Time (months)",
+           #fun="event",
+           break.x.by = 60,
+           xlim = c(0, 360),
+           conf.int = TRUE,
+           conf.int.alpha = 0.1,
+           #risk.table = TRUE,
+           #cumevents = TRUE,
+           #cumcensor = TRUE,
+           censor = FALSE,
+           tables.height = 0.175,
+           tables.theme = theme_cleantable(),
+           palette = c("#993333", "#0066CC"),
+           ggtheme = theme_bw())
+
+bd_stat %>% select(n, date_j0_ttt, presence_statine, date_premiere_statine,date_derniere_nouvelle_ttt, date_fin_ligne_therapeutique_ttt,rechute_1,date_rechute_1, time2)
+
+# Export pour voir les problemes
+bd_stat_sortie<- bd_stat  %>% select(n,num_ligne_ttt, date_j0_ttt, presence_statine,periode, statut_statine,rechute_1,date_rechute_1,event,rechute_2, date_rechute_2, date_premiere_statine,date_derniere_nouvelle_ttt, date_fin_ligne_therapeutique_ttt,rechute_1, time1, time2, time3, time4, time5) %>% arrange(n, num_ligne_ttt)
+
+write.table(bd_stat_sortie,"bd_stat_sortie.csv", row.names = FALSE, sep ="*", dec=",", na=" ")
+
+
+# Combien de dates de rechute apres la fin de ligne thérapeutique
+bd_stat %>% select(n, num_ligne_ttt, rechute_1, date_rechute_1, date_fin_ligne_therapeutique_ttt) %>% 
+  filter((as.integer(date_fin_ligne_therapeutique_ttt-date_rechute_1))<0) %>% 
+  mutate(delai_rechute = date_rechute_1-date_fin_ligne_therapeutique_ttt)
+```
+
+
+
+```{r}
+bd_survie$presence_statine
+```
+
+
+
+Pour nos objectifs:
+on voudrait d'abord analyser l'effet des statines
+Est ce que le fait de prendre un traitement par statine 
+- diminue les complications immunologiques, c'est à dire diminue les rechutes et/ou la dose de corticoides et/ou le recours aux immunosuppresseurs?
+- diminue les complications vasculaires et/ou les gestes vasculaires ?
+
+On voudrait de la même façon analyser l’intérêt de l'aspirine
+Est ce que le fait de prendre de l'aspirine diminue les complications vasculaires et/ou les gestes vasculaires?
+
+Et également les antihypertenseurs: 
+Est ce que le  fait de prendre des antihypertenseurs diminue les complications vasculaires et/ou les gestes vasculaires?  
+et si possible stratifier le risque sur le nombre d'antihypertenseurs et la présence d'IEC.
+
+Enfin, si cela vous est possible, de réaliser une analyse univariée et multivariée sur les facteurs de risque de rechutes et de complications vasculaires.
