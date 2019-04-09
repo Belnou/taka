@@ -1,0 +1,12 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+                                                ASPIRINE
+ 
+```{r}
+
+```
+
+
+Est ce que le fait de prendre de l'aspirine diminue les complications vasculaires et/ou les gestes vasculaires?
