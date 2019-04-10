@@ -2,15 +2,16 @@
 title: "R Notebook"
 output: html_notebook
 ---
- NB TAKA
-
 
 INCOHERENCE DE DATES
 ```{r}
-# Verif incoherence des dates
+# Verif incoherence des dates ---> fin de ligne avant le début de la ligne
+# ---> 2 NA car pas de dates_J0 ni date de fin de ligne thErapeutique
+# ---> patients n°16 et 52, a exclure ?
 bd_traitement %>% select(n, num_ligne_ttt, date_fin_ligne_therapeutique_ttt, date_j0_ttt ) %>% mutate(duree_traitement = as.integer(date_fin_ligne_therapeutique_ttt - date_j0_ttt)) %>% filter(duree_traitement<0 | is.na(duree_traitement))
 
-# Verifications coherence date de debut et date de fin de ligne therapeutique
+# On va transformer notre base longue en base large pour mettre les lignes les unes a la suite des autres pour verifier les coherences de dates entre chaque ligne theapeutique.
+
 vars <- c("annee_fin","mois_fin", "jour_fin","annee_j0","mois_j0", "jour_j0", "duree_traitement" )
 
 bdtt <- bd_traitement  %>% select(n, num_ligne_ttt, date_fin_ligne_therapeutique_ttt, date_j0_ttt ) %>% 
