@@ -69,12 +69,21 @@ bd_l %>% filter(
 ```
 
 VERIFICATION DATES DE GESTES
-
 ```{r }
 mabase %>% select(n, num_ligne_ttt, date_j0_ttt, date_fin_ligne_therapeutique_ttt, geste_1, date_geste1, geste_2, date_geste2, geste_3, date_geste3, geste_4, date_geste_4, geste_5, date_geste_5, geste_6, date_geste_6) %>% 
-  filter(n==10) #%>% 
+  filter(n==46) #%>% 
   #filter(geste_1==1 | geste_2==1 | geste_3==1 | geste_4==1 | geste_5==1 | geste_6==1 )
 
 write.table(verif_geste,"verif_geste.csv", row.names = FALSE, sep ="*", dec=",", na=" ")
+```
+
+
+VERIFICATION DATES DES COMPLICATIONS
+```{r }
+mabase %>% select(n, num_ligne_ttt, date_j0_ttt, date_fin_ligne_therapeutique_ttt, complication_1, date_complication_n_1, complication_2, date_complication_n_2) %>% 
+  filter(n==32)
+  filter(complication_1==1 | complication_2==1 )
+
+write.table(verif_complication,"verif_complication.csv", row.names = FALSE, sep ="*", dec=",", na=" ")
 ```
 
