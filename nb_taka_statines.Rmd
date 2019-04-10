@@ -5,14 +5,14 @@ output: html_notebook
 
                                                 STATINES
 
-
+Base de donnees pour les analyses sur les statines
 ```{r}
 bd_statine <- mabase
 ```
 
 
 CREATION VARIABLE DE SURVIE POUR STATINE
-```{r}
+```{r rows.print=128}
 bd_statine_1 <- bd_statine %>% mutate(periode=factor("1"))
 bd_statine_2 <- bd_statine_1[which(bd_statine_1$presence_statine==1),]  
 bd_statine_2 <- bd_statine_2  %>% mutate(periode = factor("2"))  
@@ -25,21 +25,18 @@ bd_statine <- bd_statine %>%
   )) %>% 
    mutate(date_end = case_when(
     periode == "2" & rechute_1==1  ~ date_rechute_1,
-    periode == "2" & rechute_1==0 & !is.na(date_fin_ligne_therapeutique_ttt) ~ date_fin_ligne_therapeutique_ttt,
-    periode == "2" & rechute_1==0 & is.na(date_fin_ligne_therapeutique_ttt)  ~ date_derniere_nouvelle_ttt,
+    periode == "2" & rechute_1==0  ~ date_fin_ligne_therapeutique_ttt,
     periode == "1" & presence_statine==1  ~ date_premiere_statine,
     periode == "1" & presence_statine==0 & rechute_1==1  ~ date_rechute_1,
-    periode == "1" & presence_statine==0 & rechute_1==0 & !is.na(date_fin_ligne_therapeutique_ttt) ~ date_fin_ligne_therapeutique_ttt,
-    periode == "1" & presence_statine==0 & rechute_1==0 & is.na(date_fin_ligne_therapeutique_ttt) ~ date_derniere_nouvelle_ttt)
-    ) %>% 
-      mutate(time1 = as.integer(case_when(
-      presence_statine ==1 & periode == "2" ~ date_premiere_statine - date_j0_ttt))) %>% 
-    mutate(time1 = case_when(
+    periode == "1" & presence_statine==0 & rechute_1==0  ~ date_fin_ligne_therapeutique_ttt
+  )) %>% 
+  mutate(time1 = as.integer(case_when(
+     presence_statine ==1 & periode == "2" ~ date_premiere_statine - date_j0_ttt))) %>% 
+  mutate(time1 = case_when(
       presence_statine ==1 & periode == "2"~ time1,
-      TRUE ~0L
-      )
-    ) %>% 
-    mutate(time2 = as.integer(case_when(
+      TRUE ~ 0L
+      )) %>% 
+  mutate(time2 = as.integer(case_when(
       presence_statine ==1 & periode == "1" ~ date_premiere_statine - date_j0_ttt,
       presence_statine ==1 & periode == "2" ~ date_end - date_premiere_statine,
       presence_statine ==0 ~ date_end - date_j0_ttt))) %>% 
@@ -51,9 +48,10 @@ bd_statine <- bd_statine %>%
          presence_statine ==1 & periode == "2" ~ as.integer(as.character(rechute_1)),
          presence_statine ==0 ~ as.integer(as.character(rechute_1))
          )) %>% 
-    mutate(time1=round(time1/30.45, digits=1),
+  mutate(time1=round(time1/30.45, digits=1),
          time2=round(time2/30.45, digits=1),
-         time3=round(time3/30.45, digits=1)) %>% 
+         time3=round(time3/30.45, digits=1)
+  ) %>% 
     mutate(statut_statine = case_when(
     presence_statine ==1 & periode == "1"~ 0L,
     presence_statine ==1 & periode == "2"~ 1L,
@@ -63,7 +61,14 @@ bd_statine <- bd_statine %>%
     time4 = 0,
     time5 = time2
   )
-    
+```
+
+
+
+
+```{r}
+
+
 
   
 # Pour le moment exclure comme ça les patients 16 et 52
