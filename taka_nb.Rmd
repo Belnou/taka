@@ -52,14 +52,18 @@ date_var <- bd_l %>% select(contains("date")) %>% colnames
 duree_var <- bd_l %>% select(contains("duree")) %>% colnames 
 bd_l <- bd_l  %>% mutate_at(vars(date_var), ymd) %>% mutate_at(vars(duree_var), as.integer)      
 # Verifications coherence date de debut et date de fin de ligne therapeutique
-bdtt <- bdtt %>% mutate(delai_1 = as.integer(date_j0_ligne2 - date_fin_ligne1),
-                delai_2 = as.integer(date_j0_ligne3 - date_fin_ligne2),
-                delai_3 = as.integer(date_j0_ligne4 - date_fin_ligne3),
-                delai_4 = as.integer(date_j0_ligne5 - date_fin_ligne4)
+bd_l <- bd_l %>% mutate(
+  delai_fl1_dl1 = as.integer(date_fin_ligne1 - date_J0_ligne1),
+  delai_fl1_dl2 = as.integer(date_j0_ligne2 - date_fin_ligne1),
+  delai_fl2_dl3 = as.integer(date_j0_ligne3 - date_fin_ligne2),
+  delai_fl3_dl4 = as.integer(date_j0_ligne4 - date_fin_ligne3),
+  delai_fl4_dl5 = as.integer(date_j0_ligne5 - date_fin_ligne4)
 )
 
 # --> la seule incoherence serait : 
-bdtt %>% filter(delai_1<0 | delai_2<0 | delai_3<0 | delai_4<0 ) %>% select(n , date_fin_ligne4, date_j0_ligne5, delai_4)
+bd_l %>% filter( 
+  delai_fl1_dl1 < 0 | delai_fl1_dl2 < 0 | delai_fl2_dl3 < 0 | delai_fl3_dl4 < 0 | delai_fl4_dl5 < 0
+)
 ```
 
 
