@@ -58,74 +58,7 @@ bdtt <- bdtt %>% mutate(delai_1 = as.integer(date_j0_ligne2 - date_fin_ligne1),
 bdtt %>% filter(delai_1<0 | delai_2<0 | delai_3<0 | delai_4<0 ) %>% select(n , date_fin_ligne4, date_j0_ligne5, delai_4)
 ```
 
-
-CREATION VARIABLES SUR MABASE
-
-
-```{r}
-#mabase %>% mutate_at(vars(statine_j0_ttt, statine_m3_ttt), .funs =function(x){ifelse(is.na(x),0,x)}) %>% filter(n ==29) %>% select(n, num_ligne_ttt, statine_j0_ttt)
-
-# Selection des variables
-mabase <- mabase %>% 
-  select(n, num_ligne_ttt, date_j0_ttt, date_fin_ligne_therapeutique_ttt, statine_j0_ttt, m3_ttt, statine_m3_ttt, m6_ttt,statine_m6_ttt, m12_ttt, statine_m12_ttt, m18_ttt, statine_m18_ttt, ans_3_ttt, statine_3_ans_ttt, date_derniere_nouvelle_ttt, rechute_1, date_rechute_1, rechute_2, date_rechute_2, contains("prednisone"),contains("is_"),contains("compl"),contains("gest"), contains("aspi"), contains("hta") )
-  
-# Presence statine et la date du premier statine qui apparait dans la ligne therapeutique  
-mabase <- mabase %>%  
-  mutate(presence_statine =  pmax(statine_j0_ttt ,statine_m3_ttt,statine_m6_ttt,statine_m12_ttt,statine_m18_ttt, statine_3_ans_ttt, na.rm=T)) %>% 
-  mutate(presence_statine = ifelse(is.na(presence_statine),0,presence_statine)) %>% 
-  
-  mutate(date_statine_J0 = ymd(case_when(
-    statine_j0_ttt==1~ date_j0_ttt
-  ))) %>% 
-    mutate(date_statine_m3 = ymd(case_when(
-    statine_m3_ttt==1~ m3_ttt
-  ))) %>%
-    mutate(date_statine_m6 = ymd(case_when(
-    statine_m6_ttt==1~ m6_ttt
-  ))) %>%
-    mutate(date_statine_m12 = ymd(case_when(
-    statine_m12_ttt==1~ m12_ttt
-  ))) %>%
-    mutate(date_statine_m18 = ymd(case_when(
-    statine_m18_ttt==1~ m18_ttt
-  ))) %>%
-    mutate(date_statine_3ans = ymd(case_when(
-    statine_3_ans_ttt==1~ ans_3_ttt
-  ))) %>%
-  
-  mutate(date_premiere_statine = pmin(date_statine_J0,date_statine_m3,date_statine_m6,date_statine_m12,date_statine_m18,date_statine_3ans, na.rm=TRUE))
- 
-# Presence prednisone dans la ligne th
-mabase <- mabase %>%  
-  mutate(presence_prednisone =  pmax(prednisone_j0_ttt ,prednisone_m3_ttt, prednisone_m6_ttt,prednisone_m12_ttt, prednisone_m18_ttt, prednisone_3_ans_ttt, na.rm=T)) %>% 
-  mutate(presence_prednisone = ifelse(is.na(presence_prednisone),0,presence_prednisone))
-
-# Presence is dans la ligne th
-mabase <- mabase %>%  
-  mutate(presence_is =  pmax(is_j0_ttt ,is_m3_ttt, is_m6_ttt ,is_m12_ttt, is_m18_ttt, is_3_ans_ttt, na.rm=T)) %>% 
-  mutate(presence_prednisone = ifelse(is.na(presence_is),0,presence_is))
-
-# Presence aspirine dans la ligne th
-mabase <- mabase %>%  
-  mutate(presence_aspirine =  pmax(aspirine_j0_ttt ,aspirine_m3_ttt, aspirine_m6_ttt ,aspirine_m12_ttt, aspirine_m18_ttt, aspirine_3_ans_ttt, na.rm=T)) %>% 
-  mutate(presence_aspirine = ifelse(is.na(presence_aspirine),0,presence_aspirine))
-
-# Presence anti_hta dans la ligne th
-mabase <- mabase %>%  
-  mutate(
-    antihta_j0_ttt = ifelse(nombre_anti_hta_j0_ttt>0,1,0),
-    antihta_m3_ttt = ifelse(nombre_anti_hta_m3_ttt>0,1,0),
-    antihta_m6_ttt = ifelse(nombre_antihta_m6_ttt>0,1,0),
-    antihta_m12_ttt = ifelse(nombre_antihta_m12_ttt>0,1,0),
-    antihta_m18_ttt = ifelse(nombre_antihta_m18_ttt>0,1,0),
-    antihta_3_ans_ttt = ifelse(nombre_antihta_3_ans_ttt>0,1,0)) %>% 
-  
-  mutate(presence_antihta =  pmax(antihta_j0_ttt ,antihta_m3_ttt, antihta_m6_ttt ,antihta_m12_ttt, antihta_m18_ttt, antihta_3_ans_ttt, na.rm=T)) %>% 
-  mutate(presence_antihta = ifelse(is.na(presence_antihta),0,presence_antihta))
-```
-
-
-
+CREATION VARIABLE DE SURVIE POUR STATINE
 ```{r}
 bd_statine_1 <- bd_statine %>% mutate(periode=factor("1"))
 bd_statine_2 <- bd_statine_1[which(bd_statine_1$presence_statine==1),]  
@@ -235,8 +168,17 @@ bd_stat %>% select(n, num_ligne_ttt, rechute_1, date_rechute_1, date_fin_ligne_t
 ```
 
 
-Pour nos objectifs: on voudrait d’abord analyser l’effet des statines Est ce que le fait de prendre un traitement par statine - diminue les complications immunologiques, c’est à dire diminue les rechutes et/ou la dose de corticoides et/ou le recours aux immunosuppresseurs? - diminue les complications vasculaires et/ou les gestes vasculaires ?
-On voudrait de la même façon analyser l’intérêt de l’aspirine Est ce que le fait de prendre de l’aspirine diminue les complications vasculaires et/ou les gestes vasculaires?
-Et également les antihypertenseurs: Est ce que le fait de prendre des antihypertenseurs diminue les complications vasculaires et/ou les gestes vasculaires?
-et si possible stratifier le risque sur le nombre d’antihypertenseurs et la présence d’IEC.
+Pour nos objectifs: 
+on voudrait d’abord analyser l’effet des statines 
+Est ce que le fait de prendre un traitement par statine - diminue les complications immunologiques, c’est à dire diminue les rechutes et/ou la dose de corticoides et/ou le recours aux immunosuppresseurs? - diminue les complications vasculaires et/ou les gestes vasculaires ?
+
+
+On voudrait de la même façon analyser l’intérêt de l’aspirine
+Est ce que le fait de prendre de l’aspirine diminue les complications vasculaires et/ou les gestes vasculaires?
+
+Et également les antihypertenseurs: 
+Est ce que le fait de prendre des antihypertenseurs diminue les complications vasculaires et/ou les gestes vasculaires?
+
+
+Et si possible stratifier le risque sur le nombre d’antihypertenseurs et la présence d’IEC.
 Enfin, si cela vous est possible, de réaliser une analyse univariée et multivariée sur les facteurs de risque de rechutes et de complications vasculaires.
