@@ -66,21 +66,4 @@ bd_l %>% filter(
   delai_fl1_dl1 < 0 | delai_fl1_dl2 < 0 | delai_fl2_dl3 < 0 | delai_fl3_dl4 < 0 | delai_fl4_dl5 < 0
 ) 
 
-#essai
 ```
-
-
-Pour nos objectifs: 
-on voudrait d’abord analyser l’effet des statines 
-Est ce que le fait de prendre un traitement par statine - diminue les complications immunologiques, c’est à dire diminue les rechutes et/ou la dose de corticoides et/ou le recours aux immunosuppresseurs? - diminue les complications vasculaires et/ou les gestes vasculaires ?
-
-
-On voudrait de la même façon analyser l’intérêt de l’aspirine
-Est ce que le fait de prendre de l’aspirine diminue les complications vasculaires et/ou les gestes vasculaires?
-
-Et également les antihypertenseurs: 
-Est ce que le fait de prendre des antihypertenseurs diminue les complications vasculaires et/ou les gestes vasculaires?
-
-
-Et si possible stratifier le risque sur le nombre d’antihypertenseurs et la présence d’IEC.
-Enfin, si cela vous est possible, de réaliser une analyse univariée et multivariée sur les facteurs de risque de rechutes et de complications vasculaires.

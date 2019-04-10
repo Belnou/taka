@@ -268,4 +268,8 @@ mabase <- mabase %>%
 
 ```
 
+RESTRICTION BASE DE DONNEES, EXCLUSION DE PATIENTS
+```{r}
+mabase <- mabase %>% filter(n!=16 & n!=52) 
+```
 

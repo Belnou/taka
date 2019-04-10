@@ -6,15 +6,19 @@ output: html_notebook
                                                 STATINES
 
 
+```{r}
+bd_statine <- mabase
+```
+
+
 CREATION VARIABLE DE SURVIE POUR STATINE
 ```{r}
 bd_statine_1 <- bd_statine %>% mutate(periode=factor("1"))
 bd_statine_2 <- bd_statine_1[which(bd_statine_1$presence_statine==1),]  
 bd_statine_2 <- bd_statine_2  %>% mutate(periode = factor("2"))  
-bd_stat <- base::rbind(bd_statine_1, bd_statine_2)   
+bd_statine <- base::rbind(bd_statine_1, bd_statine_2)   
 
-  
-bd_stat <- bd_stat %>%
+bd_statine <- bd_statine %>%
   mutate(date_start = case_when(
     periode == "1" ~ date_j0_ttt,
     periode == "2" ~ date_premiere_statine
