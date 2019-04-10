@@ -3,7 +3,7 @@ title: "R Notebook"
 output: html_notebook
 ---
 
-INCOHERENCE DE DATES
+VERIFICATION INCOHERENCE DE DATES
 ```{r}
 # Verif incoherence des dates ---> fin de ligne avant le début de la ligne
 # ---> 2 NA car pas de dates_J0 ni date de fin de ligne thErapeutique
