@@ -210,16 +210,26 @@ mabase <- mabase %>%
   mutate(presence_aspirine =  pmax(aspirine_j0_ttt ,aspirine_m3_ttt, aspirine_m6_ttt ,aspirine_m12_ttt, aspirine_m18_ttt, aspirine_3_ans_ttt, na.rm=T)) %>% 
   mutate(presence_aspirine = ifelse(is.na(presence_aspirine),0,presence_aspirine))
 
-
-
-
-
-```
-
-
-```{r}
-
-
+  mutate(date_aspirine_J0 = ymd(case_when(
+    aspirine_j0_ttt==1~ date_j0_ttt
+  ))) %>% 
+    mutate(date_aspirine_m3 = ymd(case_when(
+    aspirine_m3_ttt==1~ m3_ttt
+  ))) %>%
+    mutate(date_aspirine_m6 = ymd(case_when(
+    aspirine_m6_ttt==1~ m6_ttt
+  ))) %>%
+    mutate(date_aspirine_m12 = ymd(case_when(
+    aspirine_m12_ttt==1~ m12_ttt
+  ))) %>%
+    mutate(date_aspirine_m18 = ymd(case_when(
+    aspirine_m18_ttt==1~ m18_ttt
+  ))) %>%
+    mutate(date_aspirine_3ans = ymd(case_when(
+    aspirine_3_ans_ttt==1~ ans_3_ttt
+  ))) %>%
+  
+  mutate(date_premiere_aspirine = pmin(date_aspirine_J0,date_aspirine_m3,date_aspirine_m6,date_aspirine_m12,date_aspirine_m18,date_aspirine_3ans, na.rm=TRUE))
 
 
 # Presence anti_hta dans la ligne th
