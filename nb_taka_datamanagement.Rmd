@@ -6,7 +6,7 @@ output: html_notebook
 
                       DATA MANAGEMENT
 Library, upload des base, suffixes pour chaques bases
-```{r}
+```{r echo=FALSE}
 library(readxl)
 library(janitor)
 library(tidyverse)
@@ -40,7 +40,7 @@ bd_baseline <- bd_baseline %>% rename_at(vars(colnames(bd_baseline[,!colnames(bd
 ```
 
 Modification des noms des variables
-```{r}
+```{r echo=FALSE}
 bd1 <- clean_names(bd1)
 bd1 <- bd1 %>% rename(
   symptomes_m6 = "symtomes_m6",
@@ -66,7 +66,7 @@ bd1 <- bd1 %>% rename(
 ```
 
 FORMAT DES VARIABLES
-```{r}
+```{r echo=FALSE}
 # DATE
 
 bd1 <- bd1 %>% mutate_at (vars(date_derniere_nouvelle,date_naissance , date_diag_taka, date_j0, date_fin_ligne_therapeutique, date_geste1, date_geste2, date_geste3, date_geste_4, date_geste_5, date_geste_6, date_rechute_1, date_rechute_2, date_complication_n_1, date_complication_n_2, date_derniere_nouvelle_inutil ), ymd)
@@ -83,7 +83,7 @@ bd1 <- bd1 %>% mutate_at(vars(type_bioth_j0, type_bioth_m3, type_bioth_m6, type_
 
 
 MODIFICATION MESURE DE VARIABLES, REGROUPEMENT DE NIVEAUX, NOUVELLES VARIABLES ...
-```{r}
+```{r echo=FALSE}
 #  geste quand presence date de geste
 bd1 <- bd1 %>%
   mutate(geste_1 = case_when(
@@ -140,7 +140,7 @@ bd1 <- bd1 %>%
 
 
 CREATION D'UNE BASE DE DONNEE QUI MERGE TOUTES LES VARIABLES D'INTERET  <- mabase
-```{r}
+```{r echo=FALSE}
 var_bd1 <- bd1 %>% select(
   n, date_derniere_nouvelle,date_diag_taka,
   contains("compl"),
@@ -168,7 +168,7 @@ mabase <- cbind(
 
 
 COMPLETE Mabase avec les variables d'interets, creation d'outcomes etc 
-```{r rows.print=30}
+```{r echo=FALSE}
 # Presence statine et la date du premier statine qui apparait dans la ligne therapeutique  
 mabase <- mabase %>%  
   mutate(presence_statine =  pmax(statine_j0_ttt ,statine_m3_ttt,statine_m6_ttt,statine_m12_ttt,statine_m18_ttt, statine_3_ans_ttt, na.rm=T)) %>% 
@@ -208,7 +208,7 @@ mabase <- mabase %>%
 # Presence aspirine dans la ligne et la date du premier aspirine qui apparait dans la ligne therapeutique
 mabase <- mabase %>%  
   mutate(presence_aspirine =  pmax(aspirine_j0_ttt ,aspirine_m3_ttt, aspirine_m6_ttt ,aspirine_m12_ttt, aspirine_m18_ttt, aspirine_3_ans_ttt, na.rm=T)) %>% 
-  mutate(presence_aspirine = ifelse(is.na(presence_aspirine),0,presence_aspirine))
+  mutate(presence_aspirine = ifelse(is.na(presence_aspirine),0,presence_aspirine)) %>% 
 
   mutate(date_aspirine_J0 = ymd(case_when(
     aspirine_j0_ttt==1~ date_j0_ttt
@@ -243,7 +243,7 @@ mabase <- mabase %>%
       antihta_3_ans_ttt = ifelse(nombre_antihta_3_ans_ttt>0,1,0)) %>% 
     
     mutate(presence_antihta =  pmax(antihta_j0_ttt ,antihta_m3_ttt, antihta_m6_ttt ,antihta_m12_ttt,     antihta_m18_ttt, antihta_3_ans_ttt, na.rm=T)) %>% 
-    mutate(presence_antihta = ifelse(is.na(presence_antihta),0,presence_antihta))
+    mutate(presence_antihta = ifelse(is.na(presence_antihta),0,presence_antihta)) %>% 
 
   mutate(date_antihta_J0 = ymd(case_when(
     antihta_j0_ttt==1~ date_j0_ttt
