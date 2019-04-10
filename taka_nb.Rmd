@@ -8,7 +8,7 @@ INCOHERENCE DE DATES
 # Verif incoherence des dates ---> fin de ligne avant le début de la ligne
 # ---> 2 NA car pas de dates_J0 ni date de fin de ligne thErapeutique
 # ---> patients n°16 et 52, a exclure ?
-bd_traitement %>% select(n, num_ligne_ttt, date_fin_ligne_therapeutique_ttt, date_j0_ttt ) %>% mutate(duree_traitement = as.integer(date_fin_ligne_therapeutique_ttt - date_j0_ttt)) %>% filter(duree_traitement<0 | is.na(duree_traitement))
+# bd_traitement %>% select(n, num_ligne_ttt, date_fin_ligne_therapeutique_ttt, date_j0_ttt ) %>% mutate(duree_traitement = as.integer(date_fin_ligne_therapeutique_ttt - date_j0_ttt)) %>% filter(duree_traitement<0 | is.na(duree_traitement))
 
 # On va transformer notre base longue en base large pour mettre les lignes les unes a la suite des autres pour verifier les coherences de dates entre chaque ligne theapeutique.
 
@@ -46,24 +46,26 @@ bd_l <- bd_traitement  %>%
          date_j0_ligne3 = str_c(annee_j0_ligne_3,mois_j0_ligne_3,jour_j0_ligne_3,sep="-"),
          date_j0_ligne4 = str_c(annee_j0_ligne_4,mois_j0_ligne_4,jour_j0_ligne_4,sep="-"),
          date_j0_ligne5 = str_c(annee_j0_ligne_5,mois_j0_ligne_5,jour_j0_ligne_5,sep="-"))%>%
-  select(n, date_j0_ligne1, date_fin_ligne1, date_j0_ligne2, date_fin_ligne2, date_j0_ligne3, date_fin_ligne3, date_j0_ligne4, date_fin_ligne4, date_j0_ligne5, date_fin_ligne5,     duree_traitement_ligne_1, duree_traitement_ligne_2, duree_traitement_ligne_3, duree_traitement_ligne_4, duree_traitement_ligne_5)
+  select(n, date_j0_ligne1, date_fin_ligne1, duree_traitement_ligne_1, date_j0_ligne2, date_fin_ligne2,duree_traitement_ligne_2, date_j0_ligne3, date_fin_ligne3, duree_traitement_ligne_3, date_j0_ligne4, date_fin_ligne4,duree_traitement_ligne_4, date_j0_ligne5, date_fin_ligne5, duree_traitement_ligne_5)
 # Mettre au bon format les variables de cette base de donnees
 date_var <- bd_l %>% select(contains("date")) %>% colnames
 duree_var <- bd_l %>% select(contains("duree")) %>% colnames 
 bd_l <- bd_l  %>% mutate_at(vars(date_var), ymd) %>% mutate_at(vars(duree_var), as.integer)      
 # Verifications coherence date de debut et date de fin de ligne therapeutique
 bd_l <- bd_l %>% mutate(
-  delai_fl1_dl1 = as.integer(date_fin_ligne1 - date_J0_ligne1),
+  delai_fl1_dl1 = as.integer(date_fin_ligne1 - date_j0_ligne1),
   delai_fl1_dl2 = as.integer(date_j0_ligne2 - date_fin_ligne1),
   delai_fl2_dl3 = as.integer(date_j0_ligne3 - date_fin_ligne2),
   delai_fl3_dl4 = as.integer(date_j0_ligne4 - date_fin_ligne3),
   delai_fl4_dl5 = as.integer(date_j0_ligne5 - date_fin_ligne4)
 )
 
-# --> la seule incoherence serait : 
+# --> la seule incoherence serait :
+# --> Pour le patient n°6 : la ligne 5 commence avant la fin de la ligne 4
 bd_l %>% filter( 
   delai_fl1_dl1 < 0 | delai_fl1_dl2 < 0 | delai_fl2_dl3 < 0 | delai_fl3_dl4 < 0 | delai_fl4_dl5 < 0
-)
+) 
+
 ```
 
 
