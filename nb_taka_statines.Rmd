@@ -11,7 +11,7 @@ bd_statine <- mabase
 ```
 
 
-CREATION VARIABLE DE SURVIE POUR STATINE
+CREATION VARIABLE DE SURVIE POUR EVALUER L'IMPACT des STATINES SUR LA SURVENUE DE RECHUTES
 ```{r rows.print=128}
 bd_statine_1 <- bd_statine %>% mutate(periode=factor("1"))
 bd_statine_2 <- bd_statine_1[which(bd_statine_1$presence_statine==1),]  
@@ -67,20 +67,12 @@ bd_statine <- bd_statine %>%
 
 
 ```{r}
-
-
-
-  
-# Pour le moment exclure comme ça les patients 16 et 52
-bd_stat <- bd_stat %>% filter(n != 16 & n!=52)  
-map_dbl(map(bd_stat,is.na), sum)
-
-
+ 
+map_dbl(map(bd_statine,is.na), sum)
 
 library(survival)
-bd_stat  <- bd_stat  %>% mutate (statut_statine = as.factor(statut_statine))
-mod <- coxph(Surv(time4, time5, event)~ statut_statine , data = bd_stat)
-mod %>%
+model <- coxph(Surv(time5, event) ~ statut_statine , data = bd_statine)
+model %>%
   tidy() %>%
   mutate(
     HR = exp(estimate),
@@ -90,15 +82,13 @@ mod %>%
   select (term, estimate, HR, lower_95, upper_95, p.value) %>%
   mutate_at(vars(estimate, HR, lower_95, upper_95,p.value ), function(x) round(x, 4))
 
-
-fit <- survfit(Surv(time5, event) ~ statut_statine, data = bd_stat)
-
-ggsurvplot(fit, 
+fit0 <- survfit(Surv(time5, event) ~ statut_statine , data = bd_statine)
+ggsurvplot(fit0, 
            surv.median.line = "hv",
            xlab="Time (months)",
            #fun="event",
            break.x.by = 60,
-           xlim = c(0, 360),
+           xlim = c(0, 192),
            conf.int = TRUE,
            conf.int.alpha = 0.1,
            #risk.table = TRUE,
@@ -110,18 +100,8 @@ ggsurvplot(fit,
            palette = c("#993333", "#0066CC"),
            ggtheme = theme_bw())
 
-bd_stat %>% select(n, date_j0_ttt, presence_statine, date_premiere_statine,date_derniere_nouvelle_ttt, date_fin_ligne_therapeutique_ttt,rechute_1,date_rechute_1, time2)
-
-# Export pour voir les problemes
-bd_stat_sortie<- bd_stat  %>% select(n,num_ligne_ttt, date_j0_ttt, presence_statine,periode, statut_statine,rechute_1,date_rechute_1,event,rechute_2, date_rechute_2, date_premiere_statine,date_derniere_nouvelle_ttt, date_fin_ligne_therapeutique_ttt,rechute_1, time1, time2, time3, time4, time5) %>% arrange(n, num_ligne_ttt)
-
-write.table(bd_stat_sortie,"bd_stat_sortie.csv", row.names = FALSE, sep ="*", dec=",", na=" ")
-
-
-# Combien de dates de rechute apres la fin de ligne thérapeutique
-bd_stat %>% select(n, num_ligne_ttt, rechute_1, date_rechute_1, date_fin_ligne_therapeutique_ttt) %>% 
-  filter((as.integer(date_fin_ligne_therapeutique_ttt-date_rechute_1))<0) %>% 
-  mutate(delai_rechute = date_rechute_1-date_fin_ligne_therapeutique_ttt)
+# Si besoin essai en excluant les patients qui ont debute d'emble avec des statine, mais le modele les exclus automatiquement 
+bd_statine_essai <- bd_statine %>% filter(!(presence_statine==1 & time2==0))
 ```
 
 
