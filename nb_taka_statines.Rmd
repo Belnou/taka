@@ -4,7 +4,7 @@ output: html_notebook
 ---
 
                                                 STATINES
-
+ 
 Base de donnees pour les analyses sur les statines
 ```{r}
 bd_statine <- mabase
