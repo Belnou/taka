@@ -1,0 +1,240 @@
+---
+title: "nb_taka_datamanagement"
+output: html_notebook
+---
+
+
+                                                              DATA MANAGEMENT
+Library, upload des base, suffixes pour chaques bases
+```{r}
+library(readxl)
+library(janitor)
+library(tidyverse)
+library(dplyr)
+library(lubridate)
+library(forcats)
+library(purrr)
+library(broom)
+library(survminer)
+library(ggplot2)
+
+base1_taka_stat_fc <- read_excel("data/base1_taka_stat_fc.xlsx")
+base1_baseline <- read_excel("data/base1_baseline.xlsx")
+base1_covariables <- read_excel("data/base1_covariables.xlsx")
+base1_fup <- read_excel("data/base1_fup.xlsx")
+base1_traitement <- read_excel("data/base1_traitement.xlsx")
+
+
+bd1 <- base1_taka_stat_fc
+bd_baseline <- base1_baseline
+bd_covariables <- base1_covariables
+bd_fup <- base1_fup
+bd_traitement <-  base1_traitement
+
+#Suffixe propr à chaque base de donnee sauf pour bd1(=pas de suffixe)
+bd_traitement <- bd_traitement  %>% rename_at(vars(colnames(bd_traitement[,!colnames(bd_traitement) %in% c("n")])),function(x) paste0(x,"_ttt"))
+bd_covariables <- bd_covariables %>% rename_at(vars(colnames(bd_covariables[,!colnames(bd_covariables) %in% c("n")])),function(x) paste0(x,"_cov"))
+bd_fup <-  bd_fup %>%  rename_at(vars(colnames(bd_fup[,!colnames(bd_fup) %in% c("n")])),function(x) paste0(x,"_fup"))
+bd_baseline <- bd_baseline %>% rename_at(vars(colnames(bd_baseline[,!colnames(bd_baseline) %in% c("N")])),function(x) paste0(x,"_baseline"))
+
+```
+
+Modification des noms des variables
+```{r}
+bd1 <- clean_names(bd1)
+bd1 <- bd1 %>% rename(
+  symptomes_m6 = "symtomes_m6",
+  symptomes_m12 = "sympt_m12",
+  symptomes_m18 = "az_symtomes_m18",
+  symptomes_3_ans = "symptomes_3_ans",
+  symptomes_end = "sympt_af_mes_residuels_end",
+  score_nih_m3 = "nih_a_m3",
+  score_nih_m6  = "score_nih_m6",
+  score_nih_m12 = "score_nih_m12",
+  score_nih_m18 = "score_nih_m18",
+  score_nih_3_ans = "score_nih_3_ans",
+  radio_end = "radio_ddn",
+  dose_pred_mgj_j0 = "dose_j0_mg_j",
+  dose_pred_mgj_m3 = "dose_prednisone_m3",
+  dose_pred_mgj_m6 = "dose_prednisone_m6",
+  dose_pred_mgj_m12 = "dose_prednisone_m12",
+  dose_pred_mgj_m18 = "dose_prednisone_m18",
+  dose_pred_mgj_3_ans = "dose_prednisone_3_ans",
+  dose_pred_mgj_end = "dose_prednisone_mg_j_end",
+  date_naissance = "ddn"
+)
+```
+
+FORMAT DES VARIABLES
+```{r}
+# DATE
+
+bd1 <- bd1 %>% mutate_at (vars(date_derniere_nouvelle,date_naissance , date_diag_taka, date_j0, date_fin_ligne_therapeutique, date_geste1, date_geste2, date_geste3, date_geste_4, date_geste_5, date_geste_6, date_rechute_1, date_rechute_2, date_complication_n_1, date_complication_n_2, date_derniere_nouvelle_inutil ), ymd)
+
+bd_traitement <- bd_traitement %>% mutate_at (vars( date_naissance_ttt, date_j0_ttt, date_fin_ligne_therapeutique_ttt, m3_ttt, m6_ttt, m12_ttt, m18_ttt, ans_3_ttt, date_derniere_nouvelle_ttt ), ymd)
+
+
+# NUMERIQUE
+bd1 <- bd1 %>% mutate_at(vars(poids_diag), as.numeric)
+
+# FACTEUR
+bd1 <- bd1 %>% mutate_at(vars(type_bioth_j0, type_bioth_m3, type_bioth_m6, type_bioth_m12, type_bioth_m18, type_bioth_3_ans, type_bioth_end), as.factor)
+```
+
+
+MODIFICATION MESURE DE VARIABLES, REGROUPEMENT DE NIVEAUX, NOUVELLES VARIABLES ...
+```{r}
+#  geste quand presence date de geste
+bd1 <- bd1 %>%
+  mutate(geste_1 = case_when(
+    !is.na(date_geste1) ~ 1,
+    TRUE ~ 0
+  ),
+  geste_2 = case_when(
+    !is.na(date_geste2) ~ 1,
+    TRUE ~ 0
+  ),
+    geste_3 = case_when(
+    !is.na(date_geste3) ~ 1,
+    TRUE ~ 0
+  ),
+  geste_4 = case_when(
+    !is.na(date_geste_4) ~ 1,
+    TRUE ~ 0
+  ),
+  geste_5 = case_when(
+    !is.na(date_geste_5) ~ 1,
+    TRUE ~ 0
+  ),
+  geste_6 = case_when(
+    !is.na(date_geste_6) ~ 1,
+    TRUE ~ 0
+  )
+  )
+
+#  rechute quand presence date de rechute
+bd1 <- bd1 %>%
+  mutate(rechute_1 = case_when(
+    !is.na(date_rechute_1) ~ 1,
+    TRUE ~ 0
+  ),
+  rechute_2 = case_when(
+    !is.na(date_rechute_2) ~ 1,
+    TRUE ~ 0
+  )
+  )
+
+#  complication quand presence date de complication
+bd1 <- bd1 %>%
+  mutate(complication_1 = case_when(
+    !is.na(date_complication_n_1) ~ 1,
+    TRUE ~ 0
+  ),
+  complication_2 = case_when(
+    !is.na(date_complication_n_2) ~ 1,
+    TRUE ~ 0
+  )
+  )
+
+```
+
+
+CREATION D'UNE BASE DE DONNEE QUI MERGE TOUTES LES VARIABLES D'INTERET  <- mabase
+```{r}
+var_bd1 <- bd1 %>% select(
+  n, date_derniere_nouvelle,date_diag_taka,
+  contains("compl"),
+  contains("gest"),
+  contains("rech")
+  
+)
+
+var_traitement <- bd_traitement %>% select(
+  num_ligne_ttt, date_j0_ttt, date_fin_ligne_therapeutique_ttt, m3_ttt, m6_ttt,m12_ttt,m18_ttt,ans_3_ttt, date_derniere_nouvelle_ttt, 
+  contains("prednisone"),
+  contains("is_"),
+  contains("stat"),
+  contains("aspi"),
+  contains("hta")
+  
+)
+
+mabase <- cbind(
+  var_bd1, 
+  var_traitement
+  )
+
+```
+
+
+COMPLETE Mabase avec les variables d'interets, creation d'outcomes etc 
+```{r rows.print=30}
+# Presence statine et la date du premier statine qui apparait dans la ligne therapeutique  
+mabase <- mabase %>%  
+  mutate(presence_statine =  pmax(statine_j0_ttt ,statine_m3_ttt,statine_m6_ttt,statine_m12_ttt,statine_m18_ttt, statine_3_ans_ttt, na.rm=T)) %>% 
+  mutate(presence_statine = ifelse(is.na(presence_statine),0,presence_statine)) %>% 
+  
+  mutate(date_statine_J0 = ymd(case_when(
+    statine_j0_ttt==1~ date_j0_ttt
+  ))) %>% 
+    mutate(date_statine_m3 = ymd(case_when(
+    statine_m3_ttt==1~ m3_ttt
+  ))) %>%
+    mutate(date_statine_m6 = ymd(case_when(
+    statine_m6_ttt==1~ m6_ttt
+  ))) %>%
+    mutate(date_statine_m12 = ymd(case_when(
+    statine_m12_ttt==1~ m12_ttt
+  ))) %>%
+    mutate(date_statine_m18 = ymd(case_when(
+    statine_m18_ttt==1~ m18_ttt
+  ))) %>%
+    mutate(date_statine_3ans = ymd(case_when(
+    statine_3_ans_ttt==1~ ans_3_ttt
+  ))) %>%
+  
+  mutate(date_premiere_statine = pmin(date_statine_J0,date_statine_m3,date_statine_m6,date_statine_m12,date_statine_m18,date_statine_3ans, na.rm=TRUE))
+ 
+# Presence prednisone dans la ligne th
+mabase <- mabase %>%  
+  mutate(presence_prednisone =  pmax(prednisone_j0_ttt ,prednisone_m3_ttt, prednisone_m6_ttt,prednisone_m12_ttt, prednisone_m18_ttt, prednisone_3_ans_ttt, na.rm=T)) %>% 
+  mutate(presence_prednisone = ifelse(is.na(presence_prednisone),0,presence_prednisone))
+
+# Presence is dans la ligne th
+mabase <- mabase %>%  
+  mutate(presence_is =  pmax(is_j0_ttt ,is_m3_ttt, is_m6_ttt ,is_m12_ttt, is_m18_ttt, is_3_ans_ttt, na.rm=T)) %>% 
+  mutate(presence_prednisone = ifelse(is.na(presence_is),0,presence_is))
+
+# Presence aspirine dans la ligne et la date du premier statine qui apparait dans la ligne therapeutique
+mabase <- mabase %>%  
+  mutate(presence_aspirine =  pmax(aspirine_j0_ttt ,aspirine_m3_ttt, aspirine_m6_ttt ,aspirine_m12_ttt, aspirine_m18_ttt, aspirine_3_ans_ttt, na.rm=T)) %>% 
+  mutate(presence_aspirine = ifelse(is.na(presence_aspirine),0,presence_aspirine))
+
+
+
+
+
+```
+
+
+```{r}
+
+
+
+
+# Presence anti_hta dans la ligne th
+mabase <- mabase %>%  
+  mutate(
+    antihta_j0_ttt = ifelse(nombre_anti_hta_j0_ttt>0,1,0),
+    antihta_m3_ttt = ifelse(nombre_anti_hta_m3_ttt>0,1,0),
+    antihta_m6_ttt = ifelse(nombre_antihta_m6_ttt>0,1,0),
+    antihta_m12_ttt = ifelse(nombre_antihta_m12_ttt>0,1,0),
+    antihta_m18_ttt = ifelse(nombre_antihta_m18_ttt>0,1,0),
+    antihta_3_ans_ttt = ifelse(nombre_antihta_3_ans_ttt>0,1,0)) %>% 
+  mutate(presence_antihta =  pmax(antihta_j0_ttt ,antihta_m3_ttt, antihta_m6_ttt ,antihta_m12_ttt, antihta_m18_ttt, antihta_3_ans_ttt, na.rm=T)) %>% 
+  mutate(presence_antihta = ifelse(is.na(presence_antihta),0,presence_antihta))
+
+
+```
+
+
