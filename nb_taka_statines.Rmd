@@ -67,9 +67,6 @@ bd_statine <- bd_statine %>%
 
 Modele de Cox et courbe de survie --> OUTCOME : RECHUTES
 ```{r}
- 
-map_dbl(map(bd_statine,is.na), sum)
-
 library(survival)
 model <- coxph(Surv(time5, event) ~ statut_statine , data = bd_statine)
 model %>%
