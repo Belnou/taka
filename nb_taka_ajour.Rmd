@@ -208,52 +208,8 @@ bdtt %>% filter(delai_1<0 | delai_2<0 | delai_3<0 | delai_4<0 ) %>% select(n , d
 ```
 
 
-```{r, eval=FALSE}
 
-mabase <- mabase %>% 
-  mutate(
-    date_fin_ligne_therapeutique = case_when(
-      is.na(date_fin_ligne_therapeutique) ~ date_derniere_nouvelle,
-      TRUE~date_fin_ligne_therapeutique
-    )
-  )
-
-
-mabase [-which(mabase$date_fin_ligne_therapeutique==mabase$date_fin_ligne_therapeutique_ttt), c("n","num_ligne", "date_fin_ligne_therapeutique","date_fin_ligne_therapeutique_ttt", "date_derniere_nouvelle")]
-
-bd1 %>% select(n, date_fin_ligne_therapeutique, num_ligne ) %>% filter(n %in% c("11","22", "28", "29" ))
-
-bd_traitement %>% select(n, date_fin_ligne_therapeutique_ttt, num_ligne_ttt, date_derniere_nouvelle_ttt ) %>% filter(n %in% c("11","22", "28", "29" ))
-
-date_inco <- cbind(bd1[,c("n","num_ligne","date_fin_ligne_therapeutique","date_derniere_nouvelle")], bd_traitement[,c("date_fin_ligne_therapeutique_ttt", "date_derniere_nouvelle_ttt")])
-
-a <- date_inco %>% filter(n %in% c("16","52","11","22","28","29"))
-write.table(a,"a.csv", row.names = FALSE, sep ="*", dec=",", na=" ")
-
-
-bd_traitement %>% filter(n==6)
-
-```
-
-Analyse effet des statines
--rechute et/ou
--dose de corticoïde et/ou
--recours aux IS
-- complications vasculaires
--gestes vasculaire
-```{r,  eval=FALSE}
-date_rechute_1
-date_rechute_2
-bd_traitement %>% select(contains("prednisone")) %>% colnames
-bd_traitement %>% select(contains("aspi")) %>% colnames
-bd1 %>% select(contains("compl")) %>% colnames
-bd1 %>% select(contains("rech")) %>% colnames
-
-bd1 %>% select(contains("aspi"))
-```
-
-
-CREATION D'UNE BASE DE DONNEE QUI MERGE LES VARIABLES D'INTERET 
+CREATION D'UNE BASE DE DONNEE QUI MERGE LES VARIABLES D'INTERET --> mabase
 ```{r}
 var_bd1 <- bd1 %>% select(
   n, date_derniere_nouvelle,date_diag_taka,
@@ -281,15 +237,10 @@ mabase <- cbind(
 ```
 
 
-```{r}
-
-```
-
-
-CREATION DE LA BASE de donné complete
+CREATION VARIABLES SUR MABASE
 ```{r rows.print=30}
 
-#mabase %>% mutate_at(vars(statine_j0_ttt, statine_m3_ttt), .funs = function(x){ifelse(is.na(x),0,x)}) %>% filter(n ==29) %>% select(n, num_ligne_ttt, statine_j0_ttt)
+#mabase %>% mutate_at(vars(statine_j0_ttt, statine_m3_ttt), .funs =function(x){ifelse(is.na(x),0,x)}) %>% filter(n ==29) %>% select(n, num_ligne_ttt, statine_j0_ttt)
 
 # Selection des variables
 mabase <- mabase %>% 
@@ -349,47 +300,23 @@ mabase <- mabase %>%
   mutate(presence_antihta =  pmax(antihta_j0_ttt ,antihta_m3_ttt, antihta_m6_ttt ,antihta_m12_ttt, antihta_m18_ttt, antihta_3_ans_ttt, na.rm=T)) %>% 
   mutate(presence_antihta = ifelse(is.na(presence_antihta),0,presence_antihta))
 
-essai <- mabase %>% select(n, num_ligne_ttt, contains("aspir")) %>% filter(presence_aspirine==0) %>% filter(aspirine_end_ttt>0)
-suum<- function(x){sum(x, na.rm=TRUE)}
-map_dbl(essai, (suum))
-
-rm(essai)
-
-mabase %>% filter(n %in% c("19", "42", "44")) %>% select(n, num_ligne_ttt, contains("aspir")) %>% filter(num_ligne_ttt==3)
 ```
+###########################################################################################"
 
+STATINES
 
-Prendre un traitement par statine diminu les complications vasculaires
-```{r }
-verif_complic <- bd_statine %>% select(n, num_ligne_ttt, date_j0_ttt, date_fin_ligne_therapeutique_ttt, complication_1, date_complication_n_1, complication_2, date_complication_n_2) %>% arrange(n, num_ligne_ttt) %>% 
-  filter(complication_1==1 | complication_2==1)
-
-write.table(verif_complic,"verif_complic.csv", row.names = FALSE, sep ="*", dec=",", na=" ")
+Analyse effet des statines
+-rechute et/ou
+-dose de corticoïde et/ou
+-recours aux IS
+- complications vasculaires
+-gestes vasculaire
+```{r rows.print=21}
+# Statine diminue les complications vasculaires
+a <- mabase %>% filter(complication_1==1) %>% select(n) %>% pull()
+rechute_verif <-mabase %>% filter(n==51) %>% select(n,num_ligne_ttt,date_j0_ttt, date_fin_ligne_therapeutique_ttt, rechute_1, date_rechute_1) %>% arrange(n, num_ligne_ttt)
+write.table(rechute_verif,"rechute_verif.csv", row.names = FALSE, sep ="*", dec=",", na=" ")
 ```
-
-Prendre un traitement par statine diminu les complications vasculaires
-
-```{r}
-library(compareGroups)
-bd_statine$presence_statine <- as.factor(bd_statine$presence_statine)
-baselines <- compareGroups(presence_statine ~ dose_prednisone_end_ttt+rechute_1, data = bd_statine, include.miss = F )
-createTable(baselines, show.ratio = FALSE, show.p.overall = FALSE)
-
-names(bd_statine)
-bd_statine$presence_statine)
-
-bd_statine %>% 
-  group_by(presence_statine) %>% 
-  summarise(
-    n = n(),
-    moyenne = round(mean (dose_prednisone_end_ttt, na.rm=TRUE),4),
-    sd = round(sd (dose_prednisone_end_ttt, na.rm=TRUE),4),
-  )
-
-```
-
-
-
 
 SURVIE avec statine= VARIABLE DEPENDANTES DU TEMPS
 base de donnees = bd_stat
