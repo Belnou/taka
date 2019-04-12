@@ -107,7 +107,7 @@ bd_statine_essai <- bd_statine %>% filter(!(presence_statine==1 & time2==0))
 
 
 2 = LIGNE = PATIENT
-CREATION DE LA BASE DE DONNEE LARGE
+CREATION DE LA BASE DE DONNEE LARGE POUR STATINE
 --> bdls
 ```{r}
 vars_d <- c("annee_fin","mois_fin","jour_fin","annee_j0","mois_j0","jour_j0","annee_ps","mois_ps","jour_ps","annee_r","mois_r","jour_r","annee_dn","mois_dn","jour_dn","presence_statine","rechute_1")
@@ -296,7 +296,7 @@ ggsurvplot(fit0,
 ```
 
 Comparaison du nombre de rechute
-
+analyse univariees
 ```{r}
 my_tab<-table (bdls$presence_rechute ,bdls$presence_statine_integral,  deparse.level = 2, useNA = "always")
 my_tab
