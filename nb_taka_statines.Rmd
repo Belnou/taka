@@ -108,21 +108,16 @@ bd_statine_essai <- bd_statine %>% filter(!(presence_statine==1 & time2==0))
 2 = LIGNE = PATIENT
 CREATION DE LA BASE DE DONNEE LARGE
 ```{r}
-mabase_l_statine %>% select(n, num_ligne_ttt, date_j0_ttt, date_fin_ligne_therapeutique_ttt, presence_statine, date_premiere_statine, rechute_1, date_rechute_1, date_derniere_nouvelle, date_fin_ligne_therapeutique_ttt) %>% mutate()
+vars_d <- c("annee_fin","mois_fin","jour_fin","annee_j0","mois_j0","jour_j0","annee_ps","mois_ps","jour_ps","annee_r","mois_r","jour_r","annee_dn","mois_dn","jour_dn","presence_statine","rechute_1")
 
-vars_ <- c("")
-
-vars_d <- c("annee_fin","mois_fin","jour_fin","annee_j0","mois_j0","jour_j0","annee_ps","mois_ps","jour_ps","annee_r","mois_r","jour_s","annee_dn","mois_dn","jour_dn")
-
-mabase_l_statine <- bd_traitement  %>% 
+bdls <- mabase  %>% 
   select(n, num_ligne_ttt, date_j0_ttt, date_fin_ligne_therapeutique_ttt, presence_statine, date_premiere_statine, rechute_1, date_rechute_1, date_derniere_nouvelle, date_fin_ligne_therapeutique_ttt ) %>% 
   mutate_at(vars(date_fin_ligne_therapeutique_ttt,date_j0_ttt,date_premiere_statine,date_rechute_1,date_derniere_nouvelle), as.character) %>%
   separate(date_fin_ligne_therapeutique_ttt, into = c("annee_fin","mois_fin","jour_fin"), sep = "-") %>% 
   separate(date_j0_ttt, into = c("annee_j0","mois_j0","jour_j0"), sep = "-") %>% 
   separate(date_premiere_statine, into = c("annee_ps","mois_ps","jour_ps"), sep = "-") %>%
-  separate(date_rechute_1, into = c("annee_r","mois_r","jour_s"), sep = "-") %>%
+  separate(date_rechute_1, into = c("annee_r","mois_r","jour_r"), sep = "-") %>%
   separate(date_derniere_nouvelle, into = c("annee_dn","mois_dn","jour_dn"), sep = "-") %>%
-  
   mutate(num_ligne_ttt = case_when(
     num_ligne_ttt==1~"ligne_1",
     num_ligne_ttt==2~"ligne_2",
@@ -131,13 +126,14 @@ mabase_l_statine <- bd_traitement  %>%
     num_ligne_ttt==5~"ligne_5",
     TRUE~"exclure"
     )) %>% 
-  unite(xxx, vars, sep=" ") %>% 
+  unite(xxx, vars_d, sep=" ") %>% 
   spread(num_ligne_ttt, xxx) %>% 
-  separate(ligne_1, str_c(vars, "_ligne_1", sep=c(""))) %>% 
-  separate(ligne_2, str_c(vars, "_ligne_2", sep=c(""))) %>%
-  separate(ligne_3, str_c(vars, "_ligne_3", sep=c(""))) %>% 
-  separate(ligne_4, str_c(vars, "_ligne_4", sep=c(""))) %>% 
-  separate(ligne_5, str_c(vars, "_ligne_5", sep=c(""))) %>% 
+  separate(ligne_1, str_c(vars_d, "_ligne_1", sep=c(""))) %>% 
+  separate(ligne_2, str_c(vars_d, "_ligne_2", sep=c(""))) %>%
+  separate(ligne_3, str_c(vars_d, "_ligne_3", sep=c(""))) %>% 
+  separate(ligne_4, str_c(vars_d, "_ligne_4", sep=c(""))) %>% 
+  separate(ligne_5, str_c(vars_d, "_ligne_5", sep=c(""))) %>% 
+
   mutate(date_fin_ligne1 = str_c(annee_fin_ligne_1,mois_fin_ligne_1,jour_fin_ligne_1,sep="-"),
          date_fin_ligne2 = str_c(annee_fin_ligne_2,mois_fin_ligne_2,jour_fin_ligne_2,sep="-"),
          date_fin_ligne3 = str_c(annee_fin_ligne_3,mois_fin_ligne_3,jour_fin_ligne_3,sep="-"),
@@ -147,10 +143,52 @@ mabase_l_statine <- bd_traitement  %>%
          date_j0_ligne2 = str_c(annee_j0_ligne_2,mois_j0_ligne_2,jour_j0_ligne_2,sep="-"),
          date_j0_ligne3 = str_c(annee_j0_ligne_3,mois_j0_ligne_3,jour_j0_ligne_3,sep="-"),
          date_j0_ligne4 = str_c(annee_j0_ligne_4,mois_j0_ligne_4,jour_j0_ligne_4,sep="-"),
-         date_j0_ligne5 = str_c(annee_j0_ligne_5,mois_j0_ligne_5,jour_j0_ligne_5,sep="-"))%>%
-  select(n, date_j0_ligne1, date_fin_ligne1, duree_traitement_ligne_1, date_j0_ligne2, date_fin_ligne2,duree_traitement_ligne_2, date_j0_ligne3, date_fin_ligne3, duree_traitement_ligne_3, date_j0_ligne4, date_fin_ligne4,duree_traitement_ligne_4, date_j0_ligne5, date_fin_ligne5, duree_traitement_ligne_5)
+         date_j0_ligne5 = str_c(annee_j0_ligne_5,mois_j0_ligne_5,jour_j0_ligne_5,sep="-"),
+         date_ps_ligne1 = str_c(annee_ps_ligne_1,mois_ps_ligne_1,jour_ps_ligne_1,sep="-"),
+         date_ps_ligne2 = str_c(annee_ps_ligne_2,mois_ps_ligne_2,jour_ps_ligne_2,sep="-"),
+         date_ps_ligne3 = str_c(annee_ps_ligne_3,mois_ps_ligne_3,jour_ps_ligne_3,sep="-"),
+         date_ps_ligne4 = str_c(annee_ps_ligne_4,mois_ps_ligne_4,jour_ps_ligne_4,sep="-"),
+         date_ps_ligne5 = str_c(annee_ps_ligne_5,mois_ps_ligne_5,jour_ps_ligne_5,sep="-"),
+         date_r_ligne1 = str_c(annee_r_ligne_1,mois_r_ligne_1,jour_r_ligne_1,sep="-"),
+         date_r_ligne2 = str_c(annee_r_ligne_2,mois_r_ligne_2,jour_r_ligne_2,sep="-"),
+         date_r_ligne3 = str_c(annee_r_ligne_3,mois_r_ligne_3,jour_r_ligne_3,sep="-"),
+         date_r_ligne4 = str_c(annee_r_ligne_4,mois_r_ligne_4,jour_r_ligne_4,sep="-"),
+         date_r_ligne5 = str_c(annee_r_ligne_5,mois_r_ligne_5,jour_r_ligne_5,sep="-"),
+         date_dn_ligne1 = str_c(annee_dn_ligne_1,mois_dn_ligne_1,jour_dn_ligne_1,sep="-"),
+         date_dn_ligne2 = str_c(annee_dn_ligne_2,mois_dn_ligne_2,jour_dn_ligne_2,sep="-"),
+         date_dn_ligne3 = str_c(annee_dn_ligne_3,mois_dn_ligne_3,jour_dn_ligne_3,sep="-"),
+         date_dn_ligne4 = str_c(annee_dn_ligne_4,mois_dn_ligne_4,jour_dn_ligne_4,sep="-"),
+         date_dn_ligne5 = str_c(annee_dn_ligne_5,mois_dn_ligne_5,jour_dn_ligne_5,sep="-")) %>% 
+         select(-contains("annee"), -contains("mois"),-contains("jour"))
 
+# format date         
+var_date <- bdls %>% select(contains("date")) %>% colnames
+bdls <- bdls %>% mutate_at(vars(var_date), ymd) 
+# format numeric
+var_num <- bdls[,map_dbl(bdls, ~length(table(.)))%in%c("1","2")] %>% select(-contains("date")) %>% colnames
+bdls <- bdls %>% mutate_at(vars(var_num), as.numeric) 
+#date premiere rechute et presence rechute
+bdls <- bdls %>% mutate(
+  date_premiere_rechute=pmin(date_r_ligne1,date_r_ligne2,date_r_ligne3,date_r_ligne4,date_r_ligne5, na.rm = TRUE),
+  presence_rechute = case_when(
+    !is.na(date_premiere_rechute)~1,
+    TRUE~0
+  ))
+bdls %>% mutate(a = sum(rechute_1_ligne_1,rechute_1_ligne_2, na.rm = T))
 
+bd_sum <- bdls %>%  select(n, contains("rechute_1_l")) %>% 
+  mutate( nb_rechute = sum(2:5, na.rm = TRUE))
+
+# LES VERIFICATIONS
+# bdls %>% select(n,presence_rechute, contains("date_r"), date_premiere_rechute)
+
+bdls %>% mutate(nombre_rechute = rechute_1_ligne_1+rechute_1_ligne_2+rechute_1_ligne_3+rechute_1_ligne_4+rechute_1_ligne_5)
+
+# verif
+#bdls %>% filter(n==3) %>% select(n, contains("rechute_"))
+
+ # mutate(nombre_rechute = sum(rechute_1_ligne_1,rechute_1_ligne_2,rechute_1_ligne_3,rechute_1_ligne_4,rechute_1_ligne_5))
+bdls %>% select(contains("rechute_1_l")) %>% glimpse
 
 ```
 
