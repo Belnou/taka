@@ -13,6 +13,8 @@ bd_statine <- mabase
 ##########################################################################################################
                                                 RECHUTES                                              ##########################################################################################################
 
+1 = LIGNE =  LIGNE THERAPEUTIQUE (peu d'interet apres appel telephonique)
+
 CREATION VARIABLE DE SURVIE POUR EVALUER L'IMPACT des STATINES SUR LA SURVENUE DE RECHUTES
 ```{r rows.print=128}
 bd_statine_1 <- bd_statine %>% mutate(periode=factor("1"))
@@ -100,107 +102,64 @@ ggsurvplot(fit0,
 # Si besoin essai en excluant les patients qui ont debute d'emble avec des statine, mais le modele les exclus automatiquement 
 bd_statine_essai <- bd_statine %>% filter(!(presence_statine==1 & time2==0))
 ```
+
+
+
+2 = LIGNE = PATIENT
+CREATION DE LA BASE DE DONNEE LARGE
+```{r}
+mabase_l_statine %>% select(n, num_ligne_ttt, date_j0_ttt, date_fin_ligne_therapeutique_ttt, presence_statine, date_premiere_statine, rechute_1, date_rechute_1, date_derniere_nouvelle, date_fin_ligne_therapeutique_ttt) %>% mutate()
+
+vars_ <- c("")
+
+vars_d <- c("annee_fin","mois_fin","jour_fin","annee_j0","mois_j0","jour_j0","annee_ps","mois_ps","jour_ps","annee_r","mois_r","jour_s","annee_dn","mois_dn","jour_dn")
+
+mabase_l_statine <- bd_traitement  %>% 
+  select(n, num_ligne_ttt, date_j0_ttt, date_fin_ligne_therapeutique_ttt, presence_statine, date_premiere_statine, rechute_1, date_rechute_1, date_derniere_nouvelle, date_fin_ligne_therapeutique_ttt ) %>% 
+  mutate_at(vars(date_fin_ligne_therapeutique_ttt,date_j0_ttt,date_premiere_statine,date_rechute_1,date_derniere_nouvelle), as.character) %>%
+  separate(date_fin_ligne_therapeutique_ttt, into = c("annee_fin","mois_fin","jour_fin"), sep = "-") %>% 
+  separate(date_j0_ttt, into = c("annee_j0","mois_j0","jour_j0"), sep = "-") %>% 
+  separate(date_premiere_statine, into = c("annee_ps","mois_ps","jour_ps"), sep = "-") %>%
+  separate(date_rechute_1, into = c("annee_r","mois_r","jour_s"), sep = "-") %>%
+  separate(date_derniere_nouvelle, into = c("annee_dn","mois_dn","jour_dn"), sep = "-") %>%
+  
+  mutate(num_ligne_ttt = case_when(
+    num_ligne_ttt==1~"ligne_1",
+    num_ligne_ttt==2~"ligne_2",
+    num_ligne_ttt==3~"ligne_3",
+    num_ligne_ttt==4~"ligne_4",
+    num_ligne_ttt==5~"ligne_5",
+    TRUE~"exclure"
+    )) %>% 
+  unite(xxx, vars, sep=" ") %>% 
+  spread(num_ligne_ttt, xxx) %>% 
+  separate(ligne_1, str_c(vars, "_ligne_1", sep=c(""))) %>% 
+  separate(ligne_2, str_c(vars, "_ligne_2", sep=c(""))) %>%
+  separate(ligne_3, str_c(vars, "_ligne_3", sep=c(""))) %>% 
+  separate(ligne_4, str_c(vars, "_ligne_4", sep=c(""))) %>% 
+  separate(ligne_5, str_c(vars, "_ligne_5", sep=c(""))) %>% 
+  mutate(date_fin_ligne1 = str_c(annee_fin_ligne_1,mois_fin_ligne_1,jour_fin_ligne_1,sep="-"),
+         date_fin_ligne2 = str_c(annee_fin_ligne_2,mois_fin_ligne_2,jour_fin_ligne_2,sep="-"),
+         date_fin_ligne3 = str_c(annee_fin_ligne_3,mois_fin_ligne_3,jour_fin_ligne_3,sep="-"),
+         date_fin_ligne4 = str_c(annee_fin_ligne_4,mois_fin_ligne_4,jour_fin_ligne_4,sep="-"),
+         date_fin_ligne5 = str_c(annee_fin_ligne_5,mois_fin_ligne_5,jour_fin_ligne_5,sep="-"),
+         date_j0_ligne1 = str_c(annee_j0_ligne_1,mois_j0_ligne_1,jour_j0_ligne_1,sep="-"),
+         date_j0_ligne2 = str_c(annee_j0_ligne_2,mois_j0_ligne_2,jour_j0_ligne_2,sep="-"),
+         date_j0_ligne3 = str_c(annee_j0_ligne_3,mois_j0_ligne_3,jour_j0_ligne_3,sep="-"),
+         date_j0_ligne4 = str_c(annee_j0_ligne_4,mois_j0_ligne_4,jour_j0_ligne_4,sep="-"),
+         date_j0_ligne5 = str_c(annee_j0_ligne_5,mois_j0_ligne_5,jour_j0_ligne_5,sep="-"))%>%
+  select(n, date_j0_ligne1, date_fin_ligne1, duree_traitement_ligne_1, date_j0_ligne2, date_fin_ligne2,duree_traitement_ligne_2, date_j0_ligne3, date_fin_ligne3, duree_traitement_ligne_3, date_j0_ligne4, date_fin_ligne4,duree_traitement_ligne_4, date_j0_ligne5, date_fin_ligne5, duree_traitement_ligne_5)
+
+
+
+```
+
+
+
 
 
 ##########################################################################################################
                                                 COMPLICATIONS                                              ##########################################################################################################
-
-Reinitialisation de la base de donnees pour les analyses sur les statines
-```{r}
-bd_statine <- mabase
-```
-
-CREATION VARIABLE DE SURVIE POUR EVALUER L'IMPACT des STATINES SUR LA SURVENUE DE RECHUTES
-```{r rows.print=128}
-bd_statine_1 <- bd_statine %>% mutate(periode=factor("1"))
-bd_statine_2 <- bd_statine_1[which(bd_statine_1$presence_statine==1),]  
-bd_statine_2 <- bd_statine_2  %>% mutate(periode = factor("2"))  
-bd_statine <- base::rbind(bd_statine_1, bd_statine_2)   
-
-bd_statine <- bd_statine %>%
-  mutate(date_start = case_when(
-    periode == "1" ~ date_j0_ttt,
-    periode == "2" ~ date_premiere_statine
-  )) %>% 
-   mutate(date_end = case_when(
-    periode == "2" & rechute_1==1  ~ date_rechute_1,
-    periode == "2" & rechute_1==0  ~ date_fin_ligne_therapeutique_ttt,
-    periode == "1" & presence_statine==1  ~ date_premiere_statine,
-    periode == "1" & presence_statine==0 & rechute_1==1  ~ date_rechute_1,
-    periode == "1" & presence_statine==0 & rechute_1==0  ~ date_fin_ligne_therapeutique_ttt
-  )) %>% 
-  mutate(time1 = as.integer(case_when(
-     presence_statine ==1 & periode == "2" ~ date_premiere_statine - date_j0_ttt))) %>% 
-  mutate(time1 = case_when(
-      presence_statine ==1 & periode == "2"~ time1,
-      TRUE ~ 0L
-      )) %>% 
-  mutate(time2 = as.integer(case_when(
-      presence_statine ==1 & periode == "1" ~ date_premiere_statine - date_j0_ttt,
-      presence_statine ==1 & periode == "2" ~ date_end - date_premiere_statine,
-      presence_statine ==0 ~ date_end - date_j0_ttt))) %>% 
-    mutate(time3 = case_when(
-    time1 == 0 ~ time2,
-    time1 != 0 ~ time1 + time2)) %>% 
-    mutate(event = case_when(
-         presence_statine ==1 & periode == "1" ~ 0L,
-         presence_statine ==1 & periode == "2" ~ as.integer(as.character(rechute_1)),
-         presence_statine ==0 ~ as.integer(as.character(rechute_1))
-         )) %>% 
-  mutate(time1=round(time1/30.45, digits=1),
-         time2=round(time2/30.45, digits=1),
-         time3=round(time3/30.45, digits=1)
-  ) %>% 
-    mutate(statut_statine = case_when(
-    presence_statine ==1 & periode == "1"~ 0L,
-    presence_statine ==1 & periode == "2"~ 1L,
-    presence_statine ==0 ~ 0L
-  )) %>% 
-    mutate(
-    time4 = 0,
-    time5 = time2
-  )
-```
-
-Modele de Cox et courbe de survie --> OUTCOME : RECHUTES
-```{r}
- 
-map_dbl(map(bd_statine,is.na), sum)
-
-library(survival)
-model <- coxph(Surv(time5, event) ~ statut_statine , data = bd_statine)
-model %>%
-  tidy() %>%
-  mutate(
-    HR = exp(estimate),
-    lower_95 = exp(conf.low),
-    upper_95 = exp(conf.high )
-  ) %>% 
-  select (term, estimate, HR, lower_95, upper_95, p.value) %>%
-  mutate_at(vars(estimate, HR, lower_95, upper_95,p.value ), function(x) round(x, 4))
-
-fit0 <- survfit(Surv(time5, event) ~ statut_statine , data = bd_statine)
-ggsurvplot(fit0, 
-           surv.median.line = "hv",
-           xlab="Time (months)",
-           #fun="event",
-           break.x.by = 60,
-           xlim = c(0, 192),
-           conf.int = TRUE,
-           conf.int.alpha = 0.1,
-           #risk.table = TRUE,
-           #cumevents = TRUE,
-           #cumcensor = TRUE,
-           censor = FALSE,
-           tables.height = 0.175,
-           tables.theme = theme_cleantable(),
-           palette = c("#993333", "#0066CC"),
-           ggtheme = theme_bw())
-
-# Si besoin essai en excluant les patients qui ont debute d'emble avec des statine, mais le modele les exclus automatiquement 
-bd_statine_essai <- bd_statine %>% filter(!(presence_statine==1 & time2==0))
-```
-
 
 
 
