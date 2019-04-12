@@ -67,6 +67,7 @@ bd_statine <- bd_statine %>%
   )
 ```
 
+
 Modele de Cox et courbe de survie --> OUTCOME : RECHUTES
 ```{r}
 library(survival)
@@ -107,6 +108,7 @@ bd_statine_essai <- bd_statine %>% filter(!(presence_statine==1 & time2==0))
 
 2 = LIGNE = PATIENT
 CREATION DE LA BASE DE DONNEE LARGE
+--> bdls
 ```{r}
 vars_d <- c("annee_fin","mois_fin","jour_fin","annee_j0","mois_j0","jour_j0","annee_ps","mois_ps","jour_ps","annee_r","mois_r","jour_r","annee_dn","mois_dn","jour_dn","presence_statine","rechute_1")
 
@@ -183,14 +185,125 @@ bdls <- bdls %>% mutate(
   ))
 
 bdls %>% mutate(nombre_rechute = rechute_1_ligne_1 + rechute_1_ligne_2 + rechute_1_ligne_3 + rechute_1_ligne_4 + rechute_1_ligne_5) %>% select(rechute_1_ligne_1, rechute_1_ligne_2, rechute_1_ligne_3, rechute_1_ligne_4, rechute_1_ligne_5, nombre_rechute)
-
 #date toute premiere statine et presence statine
 bdls <- bdls %>% mutate(date_first_statine = pmin(date_ps_ligne1, date_ps_ligne2, date_ps_ligne3, date_ps_ligne4, date_ps_ligne5, na.rm = TRUE),
                 presence_statine_integral= case_when(
     !is.na(date_first_statine)~1,
     TRUE~0
   ))
-                
+# date fin de traitement finale
+bdls <- bdls %>% mutate(date_fin_ttt = pmax(date_fin_ligne1, date_fin_ligne2, date_fin_ligne3, date_fin_ligne4, date_fin_ligne5, na.rm = TRUE))
+
+```
+
+CREATION VARIABLE DE SURVIE POUR EVALUER L'IMPACT des STATINES SUR LA SURVENUE DE RECHUTES
+```{r rows.print=128}
+bdls_rechute <- bdls %>% mutate(periode=factor("1"))
+bdls_r2 <- bdls_rechute[which(bdls_rechute$presence_statine_integral==1),]  
+bdls_r2 <- bdls_r2  %>% mutate(periode = factor("2"))  
+bdls_rechute <- base::rbind(bdls_rechute, bdls_r2)   
+
+bdls_rechute <- bdls_rechute %>%
+  mutate(date_start = case_when(
+    periode == "1" ~ date_j0_ligne1,
+    periode == "2" ~ date_first_statine
+  )) %>% 
+   mutate(date_end = case_when(
+    periode == "2" & presence_rechute==1  ~ date_premiere_rechute,
+    periode == "2" & presence_rechute==0  ~ date_fin_ttt,
+    periode == "1" & presence_statine_integral==1  ~ date_first_statine,
+    periode == "1" & presence_statine_integral==0 & presence_rechute==1  ~ date_premiere_rechute,
+    periode == "1" & presence_statine_integral==0 & presence_rechute==0  ~ date_fin_ttt
+  )) %>% 
+  mutate(time1 = as.integer(case_when(
+     presence_statine_integral ==1 & periode == "2" ~ date_first_statine - date_j0_ligne1))) %>% 
+  mutate(time1 = case_when(
+      presence_statine_integral ==1 & periode == "2"~ time1,
+      TRUE ~ 0L
+      )) %>% 
+  mutate(time2 = as.integer(case_when(
+      presence_statine_integral ==1 & periode == "1" ~ date_first_statine - date_j0_ligne1,
+      presence_statine_integral ==1 & periode == "2" ~ date_end - date_first_statine,
+      presence_statine_integral ==0 ~ date_end - date_j0_ligne1))) %>% 
+    mutate(time3 = case_when(
+    time1 == 0 ~ time2,
+    time1 != 0 ~ time1 + time2)) %>% 
+    mutate(event = case_when(
+         presence_statine_integral ==1 & periode == "1" ~ 0L,
+         presence_statine_integral ==1 & periode == "2" ~ as.integer(as.character(presence_rechute)),
+         presence_statine_integral ==0 ~ as.integer(as.character(presence_rechute))
+         )) %>% 
+  mutate(time1=round(time1/30.45, digits=1),
+         time2=round(time2/30.45, digits=1),
+         time3=round(time3/30.45, digits=1)
+  ) %>% 
+    mutate(statut_statine = case_when(
+    presence_statine_integral ==1 & periode == "1"~ 0L,
+    presence_statine_integral ==1 & periode == "2"~ 1L,
+    presence_statine_integral ==0 ~ 0L
+  )) %>% 
+    mutate(
+    time4 = 0,
+    time5 = time2
+  )
+
+
+## verifications
+# --> (32 = rechute avant les premieres statines)
+# --> (42 = rechute avant les premieres statines)
+# --> (51 = rechute avant les premieres statines)
+bdls_rechute %>% filter(time2>=0) %>% select(n,periode,date_j0_ligne1, date_end,date_premiere_rechute, date_first_statine, time5) %>% arrange(n)
+# Je les exclus ceux là
+bdls_rechute <- bdls_rechute %>% filter(time2>=0 )
+
+```
+
+Modele de Cox et courbe de survie --> OUTCOME : RECHUTES
+```{r}
+library(survival)
+model <- coxph(Surv(time5, event) ~ statut_statine , data = bdls_rechute)
+model %>%
+  tidy() %>%
+  mutate(
+    HR = exp(estimate),
+    lower_95 = exp(conf.low),
+    upper_95 = exp(conf.high )
+  ) %>% 
+  select (term, estimate, HR, lower_95, upper_95, p.value) %>%
+  mutate_at(vars(estimate, HR, lower_95, upper_95,p.value ), function(x) round(x, 4))
+
+
+fit0 <- survfit(Surv(time5, event) ~ statut_statine , data = bdls_rechute)
+ggsurvplot(fit0, 
+           surv.median.line = "hv",
+           xlab="Time (months)",
+           #fun="event",
+           break.x.by = 12,
+           xlim = c(0, 192),
+           #conf.int = TRUE,
+           #conf.int.alpha = 0.1,
+           #risk.table = TRUE,
+           #cumevents = TRUE,
+           #cumcensor = TRUE,
+           censor = FALSE,
+           tables.height = 0.175,
+           tables.theme = theme_cleantable(),
+           palette = c("#993333", "#0066CC"),
+           ggtheme = theme_bw())
+
+# Si besoin essai en excluant les patients qui ont debute d'emble avec des statine, mais le modele les exclus automatiquement 
+
+```
+
+Comparaison du nombre de rechute
+
+```{r}
+my_tab<-table (bdls$presence_rechute ,bdls$presence_statine_integral,  deparse.level = 2, useNA = "always")
+my_tab
+round(prop.table(my_tab ,2),digits = 3)
+fisher.test(bdls$presence_statine_integral  , bdls$presence_rechute  )
+chisq.test(bdls$presence_statine_integral, bdls$presence_rechute, correct=FALSE)
+
 ```
 
 
