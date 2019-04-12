@@ -159,7 +159,13 @@ bdls <- mabase  %>%
          date_dn_ligne3 = str_c(annee_dn_ligne_3,mois_dn_ligne_3,jour_dn_ligne_3,sep="-"),
          date_dn_ligne4 = str_c(annee_dn_ligne_4,mois_dn_ligne_4,jour_dn_ligne_4,sep="-"),
          date_dn_ligne5 = str_c(annee_dn_ligne_5,mois_dn_ligne_5,jour_dn_ligne_5,sep="-")) %>% 
-         select(-contains("annee"), -contains("mois"),-contains("jour"))
+         select(-contains("annee"), -contains("mois"),-contains("jour")) %>% 
+  mutate(rechute_1_ligne_1 = ifelse(is.na(rechute_1_ligne_1),0,rechute_1_ligne_1),
+         rechute_1_ligne_2 = ifelse(is.na(rechute_1_ligne_2),0,rechute_1_ligne_2),
+         rechute_1_ligne_3 = ifelse(is.na(rechute_1_ligne_3),0,rechute_1_ligne_3),
+         rechute_1_ligne_4 = ifelse(is.na(rechute_1_ligne_4),0,rechute_1_ligne_4),
+         rechute_1_ligne_5 = ifelse(is.na(rechute_1_ligne_5),0,rechute_1_ligne_5))
+  
 
 # format date         
 var_date <- bdls %>% select(contains("date")) %>% colnames
@@ -167,29 +173,24 @@ bdls <- bdls %>% mutate_at(vars(var_date), ymd)
 # format numeric
 var_num <- bdls[,map_dbl(bdls, ~length(table(.)))%in%c("1","2")] %>% select(-contains("date")) %>% colnames
 bdls <- bdls %>% mutate_at(vars(var_num), as.numeric) 
-#date premiere rechute et presence rechute
+glimpse(bdls)
+#date premiere rechute et presence rechute et nombre de rechute
 bdls <- bdls %>% mutate(
   date_premiere_rechute=pmin(date_r_ligne1,date_r_ligne2,date_r_ligne3,date_r_ligne4,date_r_ligne5, na.rm = TRUE),
   presence_rechute = case_when(
     !is.na(date_premiere_rechute)~1,
     TRUE~0
   ))
-bdls %>% mutate(a = sum(rechute_1_ligne_1,rechute_1_ligne_2, na.rm = T))
 
-bd_sum <- bdls %>%  select(n, contains("rechute_1_l")) %>% 
-  mutate( nb_rechute = sum(2:5, na.rm = TRUE))
+bdls %>% mutate(nombre_rechute = rechute_1_ligne_1 + rechute_1_ligne_2 + rechute_1_ligne_3 + rechute_1_ligne_4 + rechute_1_ligne_5) %>% select(rechute_1_ligne_1, rechute_1_ligne_2, rechute_1_ligne_3, rechute_1_ligne_4, rechute_1_ligne_5, nombre_rechute)
 
-# LES VERIFICATIONS
-# bdls %>% select(n,presence_rechute, contains("date_r"), date_premiere_rechute)
-
-bdls %>% mutate(nombre_rechute = rechute_1_ligne_1+rechute_1_ligne_2+rechute_1_ligne_3+rechute_1_ligne_4+rechute_1_ligne_5)
-
-# verif
-#bdls %>% filter(n==3) %>% select(n, contains("rechute_"))
-
- # mutate(nombre_rechute = sum(rechute_1_ligne_1,rechute_1_ligne_2,rechute_1_ligne_3,rechute_1_ligne_4,rechute_1_ligne_5))
-bdls %>% select(contains("rechute_1_l")) %>% glimpse
-
+#date toute premiere statine et presence statine
+bdls <- bdls %>% mutate(date_first_statine = pmin(date_ps_ligne1, date_ps_ligne2, date_ps_ligne3, date_ps_ligne4, date_ps_ligne5, na.rm = TRUE),
+                presence_statine_integral= case_when(
+    !is.na(date_first_statine)~1,
+    TRUE~0
+  ))
+                
 ```
 
 
