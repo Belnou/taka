@@ -17,6 +17,7 @@ library(purrr)
 library(broom)
 library(survminer)
 library(ggplot2)
+library(survival)
 
 base1_taka_stat_fc <- read_excel("data/base1_taka_stat_fc.xlsx")
 base1_baseline <- read_excel("data/base1_baseline.xlsx")

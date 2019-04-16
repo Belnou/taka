@@ -1,117 +1,43 @@
 ---
-title: "R Notebook"
-output: html_notebook
+title: "mkd_taka"
+author: "Pierre Belnou"
+date: "16/4/2019"
+output: html_document
 ---
 
-                                                STATINES
- 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r global options, include = FALSE}
+knitr::opts_chunk$set(echo=FALSE, warning=FALSE, message=FALSE)
+```
+
+
+```{r echo=FALSE}
+knitr::knit("nb_taka_datamanagement.Rmd")
+```
+
+#Statines
+
 Base de donnees pour les analyses sur les statines
-```{r}
+```{r, echo=FALSE}
 bd_statine <- mabase
 ```
 
-##########################################################################################################
-                                                RECHUTES                                              ##########################################################################################################
+## L'utilisation de statines diminue t'elle l'aparition de rechutes ?
+Note1 : Apres appel telephonique, creation d'une base de donnee large pour cette analyse, avec une ligne = un patient car apres mise sous statine, on considere que ce traitement est maintenue jusqu'a la fin.
 
-1 = LIGNE =  LIGNE THERAPEUTIQUE (peu d'interet apres appel telephonique)
+analyse avec statine variable dependante du temps
 
-CREATION VARIABLE DE SURVIE POUR EVALUER L'IMPACT des STATINES SUR LA SURVENUE DE RECHUTES
-```{r rows.print=128}
-bd_statine_1 <- bd_statine %>% mutate(periode=factor("1"))
-bd_statine_2 <- bd_statine_1[which(bd_statine_1$presence_statine==1),]  
-bd_statine_2 <- bd_statine_2  %>% mutate(periode = factor("2"))  
-bd_statine <- base::rbind(bd_statine_1, bd_statine_2)   
+Note2 : Exclusion de trois patients : 
+ --> 32, 42, et 51  = rechute avant les premieres statines
 
-bd_statine <- bd_statine %>%
-  mutate(date_start = case_when(
-    periode == "1" ~ date_j0_ttt,
-    periode == "2" ~ date_premiere_statine
-  )) %>% 
-   mutate(date_end = case_when(
-    periode == "2" & rechute_1==1  ~ date_rechute_1,
-    periode == "2" & rechute_1==0  ~ date_fin_ligne_therapeutique_ttt,
-    periode == "1" & presence_statine==1  ~ date_premiere_statine,
-    periode == "1" & presence_statine==0 & rechute_1==1  ~ date_rechute_1,
-    periode == "1" & presence_statine==0 & rechute_1==0  ~ date_fin_ligne_therapeutique_ttt
-  )) %>% 
-  mutate(time1 = as.integer(case_when(
-     presence_statine ==1 & periode == "2" ~ date_premiere_statine - date_j0_ttt))) %>% 
-  mutate(time1 = case_when(
-      presence_statine ==1 & periode == "2"~ time1,
-      TRUE ~ 0L
-      )) %>% 
-  mutate(time2 = as.integer(case_when(
-      presence_statine ==1 & periode == "1" ~ date_premiere_statine - date_j0_ttt,
-      presence_statine ==1 & periode == "2" ~ date_end - date_premiere_statine,
-      presence_statine ==0 ~ date_end - date_j0_ttt))) %>% 
-    mutate(time3 = case_when(
-    time1 == 0 ~ time2,
-    time1 != 0 ~ time1 + time2)) %>% 
-    mutate(event = case_when(
-         presence_statine ==1 & periode == "1" ~ 0L,
-         presence_statine ==1 & periode == "2" ~ as.integer(as.character(rechute_1)),
-         presence_statine ==0 ~ as.integer(as.character(rechute_1))
-         )) %>% 
-  mutate(time1=round(time1/30.45, digits=1),
-         time2=round(time2/30.45, digits=1),
-         time3=round(time3/30.45, digits=1)
-  ) %>% 
-    mutate(statut_statine = case_when(
-    presence_statine ==1 & periode == "1"~ 0L,
-    presence_statine ==1 & periode == "2"~ 1L,
-    presence_statine ==0 ~ 0L
-  )) %>% 
-    mutate(
-    time4 = 0,
-    time5 = time2
-  )
-```
+```{r, echo = FALSE}
+# CREATION DE LA BASE DE DONNEE LARGE POUR STATINE
+# --> bdls
 
-
-Modele de Cox et courbe de survie --> OUTCOME : RECHUTES
-```{r}
-library(survival)
-model <- coxph(Surv(time5, event) ~ statut_statine , data = bd_statine)
-model %>%
-  tidy() %>%
-  mutate(
-    HR = exp(estimate),
-    lower_95 = exp(conf.low),
-    upper_95 = exp(conf.high )
-  ) %>% 
-  select (term, estimate, HR, lower_95, upper_95, p.value) %>%
-  mutate_at(vars(estimate, HR, lower_95, upper_95,p.value ), function(x) round(x, 4))
-
-fit0 <- survfit(Surv(time5, event) ~ statut_statine , data = bd_statine)
-ggsurvplot(fit0, 
-           surv.median.line = "hv",
-           xlab="Time (months)",
-           #fun="event",
-           break.x.by = 60,
-           xlim = c(0, 192),
-           conf.int = TRUE,
-           conf.int.alpha = 0.1,
-           #risk.table = TRUE,
-           #cumevents = TRUE,
-           #cumcensor = TRUE,
-           censor = FALSE,
-           tables.height = 0.175,
-           tables.theme = theme_cleantable(),
-           palette = c("#993333", "#0066CC"),
-           ggtheme = theme_bw())
-
-# Si besoin essai en excluant les patients qui ont debute d'emble avec des statine, mais le modele les exclus automatiquement 
-bd_statine_essai <- bd_statine %>% filter(!(presence_statine==1 & time2==0))
-```
-
-
-
-2 = LIGNE = PATIENT
-
-
-CREATION DE LA BASE DE DONNEE LARGE POUR STATINE
---> bdls
-```{r}
 vars_d <- c("annee_fin","mois_fin","jour_fin","annee_j0","mois_j0","jour_j0","annee_ps","mois_ps","jour_ps","annee_r","mois_r","jour_r","annee_dn","mois_dn","jour_dn","presence_statine","rechute_1")
 
 bdls <- mabase  %>% 
@@ -198,9 +124,9 @@ bdls <- bdls %>% mutate(date_fin_ttt = pmax(date_fin_ligne1, date_fin_ligne2, da
 
 ```
 
+```{r, echo=FALSE}
+#CREATION VARIABLE DE SURVIE POUR EVALUER L'IMPACT des STATINES SUR LA SURVENUE DE RECHUTES
 
-CREATION VARIABLE DE SURVIE POUR EVALUER L'IMPACT des STATINES SUR LA SURVENUE DE RECHUTES
-```{r rows.print=128}
 bdls_rechute <- bdls %>% mutate(periode=factor("1"))
 bdls_r2 <- bdls_rechute[which(bdls_rechute$presence_statine_integral==1),]  
 bdls_r2 <- bdls_r2  %>% mutate(periode = factor("2"))  
@@ -255,18 +181,14 @@ bdls_rechute <- bdls_rechute %>%
 # --> (32 = rechute avant les premieres statines)
 # --> (42 = rechute avant les premieres statines)
 # --> (51 = rechute avant les premieres statines)
-bdls_rechute %>% filter(time2>=0) %>% select(n,periode,date_j0_ligne1, date_end,date_premiere_rechute, date_first_statine, time5) %>% arrange(n)
+#bdls_rechute %>% filter(time2>=0) %>% select(n,periode,date_j0_ligne1, date_end,date_premiere_rechute, date_first_statine, time5) %>% arrange(n)
 # Je les exclus ceux là
 bdls_rechute <- bdls_rechute %>% filter(time2>=0 )
 
 ```
-
-
-
-Modele de Cox et courbe de survie --> OUTCOME : RECHUTES
-```{r}
-library(survival)
-model <- coxph(Surv(time5, event) ~ statut_statine , data = bdls_rechute)
+### Modele
+```{r, echo=FALSE}
+model <- coxph(Surv(time1, time3 , event) ~ statut_statine , data = bdls_rechute)
 model %>%
   tidy() %>%
   mutate(
@@ -277,8 +199,10 @@ model %>%
   select (term, estimate, HR, lower_95, upper_95, p.value) %>%
   mutate_at(vars(estimate, HR, lower_95, upper_95,p.value ), function(x) round(x, 4))
 
-
-fit0 <- survfit(Surv(time5, event) ~ statut_statine , data = bdls_rechute)
+```
+### Courbe
+```{r, echo=FALSE}
+fit0 <- survfit(Surv(time1, time3, event) ~ statut_statine , data = bdls_rechute)
 ggsurvplot(fit0, 
            surv.median.line = "hv",
            xlab="Time (months)",
@@ -295,36 +219,5 @@ ggsurvplot(fit0,
            tables.theme = theme_cleantable(),
            palette = c("#993333", "#0066CC"),
            ggtheme = theme_bw())
-
-# Si besoin essai en excluant les patients qui ont debute d'emble avec des statine, mais le modele les exclus automatiquement 
-
 ```
 
-Comparaison du nombre de rechute
-analyse univariees
-```{r}
-my_tab<-table (bdls$presence_rechute ,bdls$presence_statine_integral,  deparse.level = 2, useNA = "always")
-my_tab
-round(prop.table(my_tab ,2),digits = 3)
-fisher.test(bdls$presence_statine_integral  , bdls$presence_rechute  )
-chisq.test(bdls$presence_statine_integral, bdls$presence_rechute, correct=FALSE)
-
-```
-
-
-
-
-
-##########################################################################################################
-                                                COMPLICATIONS                                              ##########################################################################################################
-
-
-
-
-
-
-Pour nos objectifs:
-on voudrait d'abord analyser l'effet des statines
-Est ce que le fait de prendre un traitement par statine 
-- diminue les complications immunologiques, c'est à dire diminue les rechutes et/ou la dose de corticoides et/ou le recours aux immunosuppresseurs?
-- diminue les complications vasculaires et/ou les gestes vasculaires ?
