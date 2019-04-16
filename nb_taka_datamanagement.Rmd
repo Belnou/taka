@@ -139,8 +139,8 @@ bd1 <- bd1 %>%
 
 ```
 
-
-CREATION D'UNE BASE DE DONNEE QUI MERGE TOUTES LES VARIABLES D'INTERET  <- mabase
+####
+CREATION D'UNE BASE DE DONNEE QUI MERGE TOUTES LES VARIABLES D'INTERET , cette base est une base longue, une ligne = une ligne therapeutique <- mabase
 ```{r echo=FALSE}
 var_bd1 <- bd1 %>% select(
   n, date_derniere_nouvelle,date_diag_taka,
@@ -166,7 +166,6 @@ mabase <- cbind(
   )
 
 ```
-
 
 COMPLETE Mabase avec les variables d'interets, creation d'outcomes etc 
 ```{r echo=FALSE}
@@ -273,4 +272,212 @@ RESTRICTION BASE DE DONNEES, EXCLUSION DE PATIENTS
 ```{r}
 mabase <- mabase %>% filter(n!=16 & n!=52) 
 ```
+####
+
+####
+CREATION D'UNE BASE DE DONNEE QUI MERGE TOUTES LES VARIABLES D'INTERET , cette base est une base LARGE, une ligne = un patient <- base_large
+```{r echo=FALSE}
+
+var_bd1_large <- bd1 %>% select(
+  n,
+  contains("compl"),
+  contains("gest"),
+  contains("rech")
+)
+
+var_traitement_large <- bd_traitement %>% select(
+  num_ligne_ttt, 
+  contains("prednisone"),
+  contains("is_"),
+  contains("stat"),
+  contains("aspi"),
+  contains("hta")
+)
+
+
+base_large <- cbind(
+  var_bd1_large, 
+  var_traitement_large
+  )
+
+base_large <- base_large %>% select(-contains("date"), -si_arret_prednisone__m18_ttt)
+
+#1 Mettre les variables facteur en facteur
+base_large <- base_large  %>% mutate_at(vars(base_large [,map_dbl(base_large ,~length(table(.)))%in%c("1","2")] %>% colnames), as.factor)
+
+
+vars_large <- base_large %>% select(-n, -num_ligne_ttt) %>% colnames
+
+base_large <- base_large   %>% 
+  mutate(num_ligne_ttt = case_when(
+    num_ligne_ttt==1~"ligne_1",
+    num_ligne_ttt==2~"ligne_2",
+    num_ligne_ttt==3~"ligne_3",
+    num_ligne_ttt==4~"ligne_4",
+    num_ligne_ttt==5~"ligne_5",
+    TRUE~"exclure"
+    )) %>% 
+  filter(num_ligne_ttt!="exclure") %>% 
+  unite(xxx, vars_large, sep=" ") %>% 
+  spread(num_ligne_ttt, xxx) %>% 
+  separate(ligne_1, str_c(vars_large, "_ligne_1", sep=c(""))) %>% 
+  separate(ligne_2, str_c(vars_large, "_ligne_2", sep=c(""))) %>%
+  separate(ligne_3, str_c(vars_large, "_ligne_3", sep=c(""))) %>% 
+  separate(ligne_4, str_c(vars_large, "_ligne_4", sep=c(""))) %>% 
+  separate(ligne_5, str_c(vars_large, "_ligne_5", sep=c(""))) 
+
+# On remet en facteur
+base_large <- base_large  %>% mutate_at(vars(base_large [,map_dbl(base_large ,~length(table(.)))%in%c("1","2")] %>% colnames), as.factor) 
+
+base_large %>% 
+  mutate(presence_complication = factor(case_when(
+    complication_1_ligne_1=="1"| complication_2_ligne_1=="1"| complication_1_ligne_2=="1"| complication_2_ligne_2=="1"| complication_1_ligne_3=="1"| complication_2_ligne_3=="1"| complication_1_ligne_4=="1"| complication_2_ligne_4=="1"| complication_1_ligne_5=="1"| complication_2_ligne_1=="1" ~"1",
+    TRUE~"0"
+  )),
+  presence_aspirine = factor(case_when(
+    aspirine_j0_ttt_ligne_1=="1"|aspirine_m3_ttt_ligne_1=="1"|aspirine_m6_ttt_ligne_1=="1"|aspirine_m12_ttt_ligne_1=="1"|aspirine_m18_ttt_ligne_1=="1"|aspirine_3_ans_ttt_ligne_1=="1"|
+      aspirine_j0_ttt_ligne_2=="1"|aspirine_m3_ttt_ligne_2=="1"|aspirine_m6_ttt_ligne_2=="1"|aspirine_m12_ttt_ligne_2=="1"|aspirine_m18_ttt_ligne_2=="1"|aspirine_3_ans_ttt_ligne_2=="1"|
+      aspirine_j0_ttt_ligne_3=="1"|aspirine_m3_ttt_ligne_3=="1"|aspirine_m6_ttt_ligne_3=="1"|aspirine_m12_ttt_ligne_3=="1"|aspirine_m18_ttt_ligne_3=="1"|aspirine_3_ans_ttt_ligne_3=="1"|
+      aspirine_j0_ttt_ligne_4=="1"|aspirine_m3_ttt_ligne_4=="1"|aspirine_m6_ttt_ligne_4=="1"|aspirine_m12_ttt_ligne_4=="1"|aspirine_m18_ttt_ligne_4=="1"|aspirine_3_ans_ttt_ligne_4=="1"|
+      aspirine_j0_ttt_ligne_5=="1"|aspirine_m3_ttt_ligne_5=="1"|aspirine_m6_ttt_ligne_5=="1"|aspirine_m12_ttt_ligne_5=="1"|aspirine_m18_ttt_ligne_5=="1"|aspirine_3_ans_ttt_ligne_5=="1"|aspirine_end_ttt_ligne_1=="1"|aspirine_end_ttt_ligne_2=="1"|aspirine_end_ttt_ligne_3=="1"|aspirine_end_ttt_ligne_4=="1"|aspirine_end_ttt_ligne_5=="1" ~ "1",
+    TRUE ~"0"
+  )),
+    presence_statine = factor(case_when(
+    statine_j0_ttt_ligne_1=="1"|statine_m3_ttt_ligne_1=="1"|statine_m6_ttt_ligne_1=="1"|statine_m12_ttt_ligne_1=="1"|statine_m18_ttt_ligne_1=="1"|statine_3_ans_ttt_ligne_1=="1"|
+      statine_j0_ttt_ligne_2=="1"|statine_m3_ttt_ligne_2=="1"|statine_m6_ttt_ligne_2=="1"|statine_m12_ttt_ligne_2=="1"|statine_m18_ttt_ligne_2=="1"|statine_3_ans_ttt_ligne_2=="1"|
+      statine_j0_ttt_ligne_3=="1"|statine_m3_ttt_ligne_3=="1"|statine_m6_ttt_ligne_3=="1"|statine_m12_ttt_ligne_3=="1"|statine_m18_ttt_ligne_3=="1"|statine_3_ans_ttt_ligne_3=="1"|
+      statine_j0_ttt_ligne_4=="1"|statine_m3_ttt_ligne_4=="1"|statine_m6_ttt_ligne_4=="1"|statine_m12_ttt_ligne_4=="1"|statine_m18_ttt_ligne_4=="1"|statine_3_ans_ttt_ligne_4=="1"|
+      statine_j0_ttt_ligne_5=="1"|statine_m3_ttt_ligne_5=="1"|statine_m6_ttt_ligne_5=="1"|statine_m12_ttt_ligne_5=="1"|statine_m18_ttt_ligne_5=="1"|statine_3_ans_ttt_ligne_5=="1"|statine_end_ttt_ligne_1=="1"|statine_end_ttt_ligne_2=="1"|statine_end_ttt_ligne_3=="1"|statine_end_ttt_ligne_4=="1"|statine_end_ttt_ligne_5=="1" ~ "1",
+    TRUE ~"0"
+  )),
+      presence_is = factor(case_when(
+    is_j0_ttt_ligne_1=="1"|is_m3_ttt_ligne_1=="1"|is_m6_ttt_ligne_1=="1"|is_m12_ttt_ligne_1=="1"|is_m18_ttt_ligne_1=="1"|is_3_ans_ttt_ligne_1=="1"|
+      is_j0_ttt_ligne_2=="1"|is_m3_ttt_ligne_2=="1"|is_m6_ttt_ligne_2=="1"|is_m12_ttt_ligne_2=="1"|is_m18_ttt_ligne_2=="1"|is_3_ans_ttt_ligne_2=="1"|
+      is_j0_ttt_ligne_3=="1"|is_m3_ttt_ligne_3=="1"|is_m6_ttt_ligne_3=="1"|is_m12_ttt_ligne_3=="1"|is_m18_ttt_ligne_3=="1"|is_3_ans_ttt_ligne_3=="1"|
+      is_j0_ttt_ligne_4=="1"|is_m3_ttt_ligne_4=="1"|is_m6_ttt_ligne_4=="1"|is_m12_ttt_ligne_4=="1"|is_m18_ttt_ligne_4=="1"|is_3_ans_ttt_ligne_4=="1"|
+      is_j0_ttt_ligne_5=="1"|is_m3_ttt_ligne_5=="1"|is_m6_ttt_ligne_5=="1"|is_m12_ttt_ligne_5=="1"|is_m18_ttt_ligne_5=="1"|is_3_ans_ttt_ligne_5=="1"|is_end_ttt_ligne_1=="1"|is_end_ttt_ligne_2=="1"|is_end_ttt_ligne_3=="1"|is_end_ttt_ligne_4=="1"|is_end_ttt_ligne_5=="1" ~ "1",
+    TRUE ~"0"
+  )),
+        presence_prednisone = factor(case_when(
+    prednisone_j0_ttt_ligne_1=="1"|prednisone_m3_ttt_ligne_1=="1"|prednisone_m6_ttt_ligne_1=="1"|prednisone_m12_ttt_ligne_1=="1"|prednisone_m18_ttt_ligne_1=="1"|prednisone_3_ans_ttt_ligne_1=="1"|
+      prednisone_j0_ttt_ligne_2=="1"|prednisone_m3_ttt_ligne_2=="1"|prednisone_m6_ttt_ligne_2=="1"|prednisone_m12_ttt_ligne_2=="1"|prednisone_m18_ttt_ligne_2=="1"|prednisone_3_ans_ttt_ligne_2=="1"|
+      prednisone_j0_ttt_ligne_3=="1"|prednisone_m3_ttt_ligne_3=="1"|prednisone_m6_ttt_ligne_3=="1"|prednisone_m12_ttt_ligne_3=="1"|prednisone_m18_ttt_ligne_3=="1"|prednisone_3_ans_ttt_ligne_3=="1"|
+      prednisone_j0_ttt_ligne_4=="1"|prednisone_m3_ttt_ligne_4=="1"|prednisone_m6_ttt_ligne_4=="1"|prednisone_m12_ttt_ligne_4=="1"|prednisone_m18_ttt_ligne_4=="1"|prednisone_3_ans_ttt_ligne_4=="1"|
+      prednisone_j0_ttt_ligne_5=="1"|prednisone_m3_ttt_ligne_5=="1"|prednisone_m6_ttt_ligne_5=="1"|prednisone_m12_ttt_ligne_5=="1"|prednisone_m18_ttt_ligne_5=="1"|prednisone_3_ans_ttt_ligne_5=="1"|prednisone_end_ttt_ligne_1=="1"|prednisone_end_ttt_ligne_2=="1"|prednisone_end_ttt_ligne_3=="1"|prednisone_end_ttt_ligne_4=="1"|prednisone_end_ttt_ligne_5=="1" ~ "1",
+    TRUE ~"0"
+  )))
+  
+  
+  
+
+base_large %>% select(contains("predn")) %>% colnames
+```
+
+
+```{r echo=FALSE}
+# Presence statine et la date du premier statine qui apparait dans la ligne therapeutique  
+mabase <- mabase %>%  
+  mutate(presence_statine =  pmax(statine_j0_ttt ,statine_m3_ttt,statine_m6_ttt,statine_m12_ttt,statine_m18_ttt, statine_3_ans_ttt, na.rm=T)) %>% 
+  mutate(presence_statine = ifelse(is.na(presence_statine),0,presence_statine)) %>% 
+  
+  mutate(date_statine_J0 = ymd(case_when(
+    statine_j0_ttt==1~ date_j0_ttt
+  ))) %>% 
+    mutate(date_statine_m3 = ymd(case_when(
+    statine_m3_ttt==1~ m3_ttt
+  ))) %>%
+    mutate(date_statine_m6 = ymd(case_when(
+    statine_m6_ttt==1~ m6_ttt
+  ))) %>%
+    mutate(date_statine_m12 = ymd(case_when(
+    statine_m12_ttt==1~ m12_ttt
+  ))) %>%
+    mutate(date_statine_m18 = ymd(case_when(
+    statine_m18_ttt==1~ m18_ttt
+  ))) %>%
+    mutate(date_statine_3ans = ymd(case_when(
+    statine_3_ans_ttt==1~ ans_3_ttt
+  ))) %>%
+  
+  mutate(date_premiere_statine = pmin(date_statine_J0,date_statine_m3,date_statine_m6,date_statine_m12,date_statine_m18,date_statine_3ans, na.rm=TRUE))
+ 
+# Presence prednisone dans la ligne th
+mabase <- mabase %>%  
+  mutate(presence_prednisone =  pmax(prednisone_j0_ttt ,prednisone_m3_ttt, prednisone_m6_ttt,prednisone_m12_ttt, prednisone_m18_ttt, prednisone_3_ans_ttt, na.rm=T)) %>% 
+  mutate(presence_prednisone = ifelse(is.na(presence_prednisone),0,presence_prednisone))
+
+# Presence is dans la ligne th
+mabase <- mabase %>%  
+  mutate(presence_is =  pmax(is_j0_ttt ,is_m3_ttt, is_m6_ttt ,is_m12_ttt, is_m18_ttt, is_3_ans_ttt, na.rm=T)) %>% 
+  mutate(presence_prednisone = ifelse(is.na(presence_is),0,presence_is))
+
+# Presence aspirine dans la ligne et la date du premier aspirine qui apparait dans la ligne therapeutique
+mabase <- mabase %>%  
+  mutate(presence_aspirine =  pmax(aspirine_j0_ttt ,aspirine_m3_ttt, aspirine_m6_ttt ,aspirine_m12_ttt, aspirine_m18_ttt, aspirine_3_ans_ttt, na.rm=T)) %>% 
+  mutate(presence_aspirine = ifelse(is.na(presence_aspirine),0,presence_aspirine)) %>% 
+
+  mutate(date_aspirine_J0 = ymd(case_when(
+    aspirine_j0_ttt==1~ date_j0_ttt
+  ))) %>% 
+    mutate(date_aspirine_m3 = ymd(case_when(
+    aspirine_m3_ttt==1~ m3_ttt
+  ))) %>%
+    mutate(date_aspirine_m6 = ymd(case_when(
+    aspirine_m6_ttt==1~ m6_ttt
+  ))) %>%
+    mutate(date_aspirine_m12 = ymd(case_when(
+    aspirine_m12_ttt==1~ m12_ttt
+  ))) %>%
+    mutate(date_aspirine_m18 = ymd(case_when(
+    aspirine_m18_ttt==1~ m18_ttt
+  ))) %>%
+    mutate(date_aspirine_3ans = ymd(case_when(
+    aspirine_3_ans_ttt==1~ ans_3_ttt
+  ))) %>%
+  
+  mutate(date_premiere_aspirine = pmin(date_aspirine_J0,date_aspirine_m3,date_aspirine_m6,date_aspirine_m12,date_aspirine_m18,date_aspirine_3ans, na.rm=TRUE))
+
+
+# Presence anti_hta dans la ligne et date du premier antiHTA dans la ligne
+  mabase <- mabase %>%  
+    mutate(
+      antihta_j0_ttt = ifelse(nombre_anti_hta_j0_ttt>0,1,0),
+      antihta_m3_ttt = ifelse(nombre_anti_hta_m3_ttt>0,1,0),
+      antihta_m6_ttt = ifelse(nombre_antihta_m6_ttt>0,1,0),
+      antihta_m12_ttt = ifelse(nombre_antihta_m12_ttt>0,1,0),
+      antihta_m18_ttt = ifelse(nombre_antihta_m18_ttt>0,1,0),
+      antihta_3_ans_ttt = ifelse(nombre_antihta_3_ans_ttt>0,1,0)) %>% 
+    
+    mutate(presence_antihta =  pmax(antihta_j0_ttt ,antihta_m3_ttt, antihta_m6_ttt ,antihta_m12_ttt,     antihta_m18_ttt, antihta_3_ans_ttt, na.rm=T)) %>% 
+    mutate(presence_antihta = ifelse(is.na(presence_antihta),0,presence_antihta)) %>% 
+
+  mutate(date_antihta_J0 = ymd(case_when(
+    antihta_j0_ttt==1~ date_j0_ttt
+  ))) %>% 
+    mutate(date_antihta_m3 = ymd(case_when(
+    antihta_m3_ttt==1~ m3_ttt
+  ))) %>%
+    mutate(date_antihta_m6 = ymd(case_when(
+    antihta_m6_ttt==1~ m6_ttt
+  ))) %>%
+    mutate(date_antihta_m12 = ymd(case_when(
+    antihta_m12_ttt==1~ m12_ttt
+  ))) %>%
+    mutate(date_antihta_m18 = ymd(case_when(
+    antihta_m18_ttt==1~ m18_ttt
+  ))) %>%
+    mutate(date_antihta_3ans = ymd(case_when(
+    antihta_3_ans_ttt==1~ ans_3_ttt
+  ))) %>%
+  
+  mutate(date_premiere_antihta = pmin(date_antihta_J0,date_antihta_m3,date_antihta_m6,date_antihta_m12,date_antihta_m18,date_antihta_3ans, na.rm=TRUE))
+
+```
+
+
+```{r}
+mabase <- mabase %>% filter(n!=16 & n!=52) 
+```
+####
+
 

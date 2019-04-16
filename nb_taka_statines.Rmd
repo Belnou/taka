@@ -109,6 +109,7 @@ bd_statine_essai <- bd_statine %>% filter(!(presence_statine==1 & time2==0))
 2 = LIGNE = PATIENT
 
 
+
 CREATION DE LA BASE DE DONNEE LARGE POUR STATINE
 --> bdls
 ```{r}
@@ -177,7 +178,7 @@ bdls <- bdls %>% mutate_at(vars(var_date), ymd)
 # format numeric
 var_num <- bdls[,map_dbl(bdls, ~length(table(.)))%in%c("1","2")] %>% select(-contains("date")) %>% colnames
 bdls <- bdls %>% mutate_at(vars(var_num), as.numeric) 
-glimpse(bdls)
+#glimpse(bdls)
 #date premiere rechute et presence rechute et nombre de rechute
 bdls <- bdls %>% mutate(
   date_premiere_rechute=pmin(date_r_ligne1,date_r_ligne2,date_r_ligne3,date_r_ligne4,date_r_ligne5, na.rm = TRUE),
@@ -255,7 +256,7 @@ bdls_rechute <- bdls_rechute %>%
 # --> (32 = rechute avant les premieres statines)
 # --> (42 = rechute avant les premieres statines)
 # --> (51 = rechute avant les premieres statines)
-bdls_rechute %>% filter(time2>=0) %>% select(n,periode,date_j0_ligne1, date_end,date_premiere_rechute, date_first_statine, time5) %>% arrange(n)
+#bdls_rechute %>% filter(time2>=0) %>% select(n,periode,date_j0_ligne1, date_end,date_premiere_rechute, date_first_statine, time5) %>% arrange(n)
 # Je les exclus ceux là
 bdls_rechute <- bdls_rechute %>% filter(time2>=0 )
 

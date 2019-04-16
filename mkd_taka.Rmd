@@ -15,24 +15,28 @@ knitr::opts_chunk$set(echo=FALSE, warning=FALSE, message=FALSE)
 ```
 
 
-```{r echo=FALSE}
+```{r include = FALSE, echo=FALSE}
 knitr::knit("nb_taka_datamanagement.Rmd")
 ```
 
+Exclusion: 
+Patients 16 et 52 pour rmanque de donnees
+
 #Statines
 
-Base de donnees pour les analyses sur les statines
 ```{r, echo=FALSE}
+#Base de donnees pour les analyses sur les statines
 bd_statine <- mabase
 ```
 
-## L'utilisation de statines diminue t'elle l'aparition de rechutes ?
-Note1 : Apres appel telephonique, creation d'une base de donnee large pour cette analyse, avec une ligne = un patient car apres mise sous statine, on considere que ce traitement est maintenue jusqu'a la fin.
+## L'utilisation de statines diminue t'elle l'apparition de rechutes ?
+Note1 : Apres appel telephonique, creation d'une base de donnee large pour cette analyse, avec une ligne = un patient car apres mise sous statine, on considere que ce traitement est maintenue jusqu'à la fin de la derniere ligne.
 
-analyse avec statine variable dependante du temps
+
+Cox univaree avec  statine variable dependante du temps
 
 Note2 : Exclusion de trois patients : 
- --> 32, 42, et 51  = rechute avant les premieres statines
+32, 42, et 51  = rechute avant les premieres statines
 
 ```{r, echo = FALSE}
 # CREATION DE LA BASE DE DONNEE LARGE POUR STATINE
@@ -103,7 +107,7 @@ bdls <- bdls %>% mutate_at(vars(var_date), ymd)
 # format numeric
 var_num <- bdls[,map_dbl(bdls, ~length(table(.)))%in%c("1","2")] %>% select(-contains("date")) %>% colnames
 bdls <- bdls %>% mutate_at(vars(var_num), as.numeric) 
-glimpse(bdls)
+#glimpse(bdls)
 #date premiere rechute et presence rechute et nombre de rechute
 bdls <- bdls %>% mutate(
   date_premiere_rechute=pmin(date_r_ligne1,date_r_ligne2,date_r_ligne3,date_r_ligne4,date_r_ligne5, na.rm = TRUE),
@@ -112,7 +116,7 @@ bdls <- bdls %>% mutate(
     TRUE~0
   ))
 
-bdls %>% mutate(nombre_rechute = rechute_1_ligne_1 + rechute_1_ligne_2 + rechute_1_ligne_3 + rechute_1_ligne_4 + rechute_1_ligne_5) %>% select(rechute_1_ligne_1, rechute_1_ligne_2, rechute_1_ligne_3, rechute_1_ligne_4, rechute_1_ligne_5, nombre_rechute)
+#bdls %>% mutate(nombre_rechute = rechute_1_ligne_1 + rechute_1_ligne_2 + rechute_1_ligne_3 + rechute_1_ligne_4 + rechute_1_ligne_5) %>% select(rechute_1_ligne_1, rechute_1_ligne_2, rechute_1_ligne_3, rechute_1_ligne_4, rechute_1_ligne_5, nombre_rechute)
 #date toute premiere statine et presence statine
 bdls <- bdls %>% mutate(date_first_statine = pmin(date_ps_ligne1, date_ps_ligne2, date_ps_ligne3, date_ps_ligne4, date_ps_ligne5, na.rm = TRUE),
                 presence_statine_integral= case_when(
@@ -219,5 +223,13 @@ ggsurvplot(fit0,
            tables.theme = theme_cleantable(),
            palette = c("#993333", "#0066CC"),
            ggtheme = theme_bw())
+```
+
+## Nombre de rechute, selon la presence ou pas de statines
+```{r, echo=FALSE}
+bdls %>% rename(presence_statine = "presence_statine_integral") %>% count(presence_statine,presence_rechute)
+
+fisher.test(bdls$presence_statine_integral  , bdls$presence_rechute )
+
 ```
 
