@@ -319,7 +319,7 @@ mabase <- mabase %>%
 
 RESTRICTION BASE DE DONNEES, EXCLUSION DE PATIENTS
 ```{r}
-mabase <- mabase %>% filter(n!=16 & n!=52) 
+mabase <- mabase %>% filter(n!=16 & n!=52)
 ```
 ####
 
@@ -594,4 +594,14 @@ base_large %>% filter(n==35) %>% select(contains("date"))
 ```
 
 
+CREATION D'UNE BASE DE DONNEE qui merge base_large avec bd_baseline --->
+```{r}
+bd_baseline <- bd_baseline %>% filter(n!=16 & n!=52)
+bd_l <- plyr::join_all(list(base_large,bd_baseline),by = "n", type = "full")
+
+# Data management de cette base
+bd_l <- bd_l %>% 
+  mutate_at(vars(date_naissance_baseline, date_diag_taka_baseline, date_dernieres_nouvelles_baseline ), ymd)
+
+```
 

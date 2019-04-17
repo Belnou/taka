@@ -25,18 +25,9 @@ knitr::knit("nb_taka_datamanagement.Rmd")
 ```
 
 Exclusion: 
-Patients 16 et 52 pour rmanque de donnees
+Patients 16 et 52 pour manque de donnees
 
-#Statines
-
-## L'utilisation de statines diminue t'elle l'apparition de rechutes ?
-Note1 : Apres appel telephonique, creation d'une base de donnee large pour cette analyse, avec une ligne = un patient car apres mise sous statine, on considere que ce traitement est maintenue jusqu'à la fin de la derniere ligne.
-
-
-Cox univaree avec  statine variable dependante du temps
-
-Note2 : Exclusion de trois patients : 
-32, 42, et 51  = rechute avant les premieres statines
+#Statine
 
 ```{r echo=FALSE}
 #names(base_large)
@@ -44,6 +35,7 @@ Note2 : Exclusion de trois patients :
 ```
 
 ```{r echo=FALSE}
+
 #CREATION VARIABLES DE SURVIE 
 
 base_large_statine <- base_large %>% mutate(periode=factor("1"))
@@ -61,7 +53,7 @@ base_large_statine <- base_large_statine %>%
     periode == "2" & presence_rechute1==0  ~ date_fin,
     periode == "1" & presence_statine==1  ~ date_premiere_statine,
     periode == "1" & presence_statine==0 & presence_rechute1==1  ~ date_premiere_rechute1,
-    periode == "1" & presence_statine==0 & presence_rechute1==0  ~ date_fin
+    periode == "1" & presence_statine==0 & presence_rechute1==0  ~ date_derniere_nouvelle
   )) %>% 
   mutate(time1 = as.integer(case_when(
      presence_statine ==1 & periode == "2" ~ date_premiere_statine - date_j0))) %>% 
@@ -95,9 +87,37 @@ base_large_statine <- base_large_statine %>%
     time5 = time2
   )
 
+# Exclusion des rechutes avant statines
+base_large_statine <- base_large_statine  %>% filter(!(n %in% c(36, 42, 51)))
 ```
 
-### MODELE
+## Presence ou pas de statines & Rechutes
+```{r, echo=FALSE}
+
+base_large_temp_statine <- base_large  %>% filter(!(n %in% c(36, 42, 51)))
+my_tab <- table(base_large_temp_statine$presence_statine , base_large_temp_statine$presence_rechute1, deparse.level=2, useNA = "always")
+my_tab
+round(prop.table(my_tab ,2),digits = 3)
+
+```
+
+
+```{r, echo=FALSE}
+a <- fisher.test(base_large_temp_statine$presence_statine  , base_large_temp_statine$presence_rechute1)$p.value
+
+print(paste("Test Exact de Fisher, p.value = ", round(a, digits = 3)))
+```
+
+
+## L'utilisation de statines diminue t'elle l'apparition de rechutes ?
+
+Cox univaree avec  statine variable dependante du temps
+
+Note2 : Exclusion de trois patients : 
+32, 42, et 51  = rechute avant les premieres statines
+
+
+### Modele
 ```{r, echo=FALSE}
 model <- coxph(Surv(time1, time3 , event) ~ statut_statine , data = base_large_statine)
 model %>%
@@ -110,7 +130,7 @@ model %>%
   select (term, estimate, HR, lower_95, upper_95, p.value) %>%
   mutate_at(vars(estimate, HR, lower_95, upper_95,p.value ), function(x) round(x, 4))
 ```
-### COURBE
+### Courbe
 ```{r, echo=FALSE}
 fit0 <- survfit(Surv(time1, time3, event) ~ statut_statine , data = base_large_statine)
 ggsurvplot(fit0, 
@@ -131,11 +151,127 @@ ggsurvplot(fit0,
            ggtheme = theme_bw())
 ```
 
-## Nombre de rechute, selon la presence ou pas de statines A CHANGER
-```{r, echo=FALSE}
-base_large %>%  count(presence_statine,presence_rechute1)
 
-fisher.test(base_large$presence_statine  , base_large$presence_rechute1 )
+
+# Aspirine
+
+
+```{r echo=FALSE}
+#names(base_large)
+#glimpse(base_large)
+```
+
+```{r echo=FALSE}
+
+#CREATION VARIABLES DE SURVIE 
+
+base_large_aspirine <- base_large %>% mutate(periode=factor("1"))
+base_large_aspirine2 <- base_large_aspirine[which(base_large_aspirine$presence_aspirine==1),]  
+base_large_aspirine2 <- base_large_aspirine2  %>% mutate(periode = factor("2"))  
+base_large_aspirine <- base::rbind(base_large_aspirine, base_large_aspirine2)   
+
+base_large_aspirine <- base_large_aspirine %>%
+  mutate(date_start = case_when(
+    periode == "1" ~ date_j0,
+    periode == "2" ~ date_premiere_aspirine
+  )) %>% 
+   mutate(date_end = case_when(
+    periode == "2" & presence_complication==1  ~ date_premiere_complication1,
+    periode == "2" & presence_complication==0  ~ date_fin,
+    periode == "1" & presence_aspirine==1  ~ date_premiere_aspirine,
+    periode == "1" & presence_aspirine==0 & presence_complication==1  ~ date_premiere_complication1,
+    periode == "1" & presence_aspirine==0 & presence_complication==0  ~ date_derniere_nouvelle
+  )) %>% 
+  mutate(time1 = as.integer(case_when(
+     presence_aspirine ==1 & periode == "2" ~ date_premiere_aspirine - date_j0))) %>% 
+  mutate(time1 = case_when(
+      presence_aspirine ==1 & periode == "2"~ time1,
+      TRUE ~ 0L
+      )) %>% 
+  mutate(time2 = as.integer(case_when(
+      presence_aspirine ==1 & periode == "1" ~ date_premiere_aspirine - date_j0,
+      presence_aspirine ==1 & periode == "2" ~ date_end - date_premiere_aspirine,
+      presence_aspirine ==0 ~ date_end - date_j0))) %>% 
+    mutate(time3 = case_when(
+    time1 == 0 ~ time2,
+    time1 != 0 ~ time1 + time2)) %>% 
+    mutate(event = case_when(
+         presence_aspirine ==1 & periode == "1" ~ 0L,
+         presence_aspirine ==1 & periode == "2" ~ as.integer(as.character(presence_complication)),
+         presence_aspirine ==0 ~ as.integer(as.character(presence_complication))
+         )) %>% 
+  mutate(time1=round(time1/30.45, digits=1),
+         time2=round(time2/30.45, digits=1),
+         time3=round(time3/30.45, digits=1)
+  ) %>% 
+    mutate(statut_aspirine = case_when(
+    presence_aspirine ==1 & periode == "1"~ 0L,
+    presence_aspirine ==1 & periode == "2"~ 1L,
+    presence_aspirine ==0 ~ 0L
+  )) %>% 
+    mutate(
+    time4 = 0,
+    time5 = time2
+  )
+
+# Exclusion des complications avant aspirine
+#base_large_aspirine <- base_large_aspirine  %>% filter(!(n %in% c(36, 42, 51)))
+```
+
+## Presence de l'aspirine & complication
+```{r, echo=FALSE}
+
+my_tab <- table(base_large$presence_aspirine , base_large$presence_complication, deparse.level=2, useNA = "always")
+my_tab
+round(prop.table(my_tab ,2),digits = 3)
 
 ```
 
+```{r}
+b <- fisher.test(base_large$presence_aspirine  , base_large$presence_complication)$p.value
+print(paste("Test Exact de Fisher, p.value = ", round(b, digits = 3)))
+```
+
+
+
+## L'utilisation d'aspirine diminue t'elle l'apparition de complications ?
+
+Cox univaree avec  aspirine variable dependante du temps
+
+### Modele
+```{r, echo=FALSE}
+model <- coxph(Surv(time1, time3 , event) ~ statut_aspirine , data = base_large_aspirine)
+model %>%
+  tidy() %>%
+  mutate(
+    HR = exp(estimate),
+    lower_95 = exp(conf.low),
+    upper_95 = exp(conf.high )
+  ) %>% 
+  select (term, estimate, HR, lower_95, upper_95, p.value) %>%
+  mutate_at(vars(estimate, HR, lower_95, upper_95,p.value ), function(x) round(x, 4))
+```
+### Courbe
+```{r, echo=FALSE}
+fit0 <- survfit(Surv(time1, time3, event) ~ statut_aspirine , data = base_large_aspirine)
+ggsurvplot(fit0, 
+           surv.median.line = "hv",
+           xlab="Time (months)",
+           #fun="event",
+           break.x.by = 12,
+           xlim = c(0, 192),
+           #conf.int = TRUE,
+           #conf.int.alpha = 0.1,
+           #risk.table = TRUE,
+           #cumevents = TRUE,
+           #cumcensor = TRUE,
+           censor = FALSE,
+           tables.height = 0.175,
+           tables.theme = theme_cleantable(),
+           palette = c("#993333", "#0066CC"),
+           ggtheme = theme_bw())
+```
+
+
+
+#Rechute et variables baselines
