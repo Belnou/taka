@@ -2,7 +2,12 @@
 title: "mkd_taka"
 author: "Pierre Belnou"
 date: "16/4/2019"
-output: html_document
+output:
+  html_document:
+    toc: yes
+    toc_depth: 3
+    toc_float: yes
+
 ---
 
 ```{r setup, include=FALSE}
@@ -34,12 +39,12 @@ Note2 : Exclusion de trois patients :
 32, 42, et 51  = rechute avant les premieres statines
 
 ```{r echo=FALSE}
-names(base_large)
-glimpse(base_large)
+#names(base_large)
+#glimpse(base_large)
 ```
 
 ```{r echo=FALSE}
-#CREATION VARIABLES DE SURVIE A GARDER
+#CREATION VARIABLES DE SURVIE 
 
 base_large_statine <- base_large %>% mutate(periode=factor("1"))
 base_large_statine2 <- base_large_statine[which(base_large_statine$presence_statine==1),]  
@@ -92,7 +97,7 @@ base_large_statine <- base_large_statine %>%
 
 ```
 
-## MODELE
+### MODELE
 ```{r, echo=FALSE}
 model <- coxph(Surv(time1, time3 , event) ~ statut_statine , data = base_large_statine)
 model %>%
@@ -105,7 +110,7 @@ model %>%
   select (term, estimate, HR, lower_95, upper_95, p.value) %>%
   mutate_at(vars(estimate, HR, lower_95, upper_95,p.value ), function(x) round(x, 4))
 ```
-## COURBE
+### COURBE
 ```{r, echo=FALSE}
 fit0 <- survfit(Surv(time1, time3, event) ~ statut_statine , data = base_large_statine)
 ggsurvplot(fit0, 
@@ -133,3 +138,4 @@ base_large %>%  count(presence_statine,presence_rechute1)
 fisher.test(base_large$presence_statine  , base_large$presence_rechute1 )
 
 ```
+
