@@ -345,7 +345,7 @@ base_large <- base_large  %>% mutate_at(vars(base_large [,map_dbl(base_large ,~l
 
 
 vars_large_sans_date <- base_large %>% select(-n, -num_ligne_ttt, -contains("date")) %>% colnames
-vars_large_date <- c("annee_fin","mois_fin","jour_fin","annee_j0","mois_j0","jour_j0","annee_ps","mois_ps","jour_ps","annee_ppred","mois_ppred","jour_ppred","annee_pis","mois_pis","jour_pis","annee_pasp","mois_pasp","jour_pasp","annee_phta","mois_phta","jour_phta","annee_r1","mois_r1","jour_r1","annee_r2","mois_r2","jour_r2","annee_complic1","mois__complic1","jour__complic1","annee_g1","mois_g1","jour_g1","annee_g2","mois_g2","jour_g2","annee_dn","mois_dn","jour_dn")
+vars_large_date <- c("annee_fin","mois_fin","jour_fin","annee_j0","mois_j0","jour_j0","annee_ps","mois_ps","jour_ps","annee_ppred","mois_ppred","jour_ppred","annee_pis","mois_pis","jour_pis","annee_pasp","mois_pasp","jour_pasp","annee_phta","mois_phta","jour_phta","annee_r1","mois_r1","jour_r1","annee_r2","mois_r2","jour_r2","annee_complic1","mois_complic1","jour_complic1","annee_g1","mois_g1","jour_g1","annee_g2","mois_g2","jour_g2","annee_dn","mois_dn","jour_dn")
 
 vars_tot <- c(vars_large_sans_date, vars_large_date)
 
@@ -362,7 +362,7 @@ base_large <- base_large   %>%
   separate(date_premiere_antihta, into = c("annee_phta","mois_phta","jour_phta"), sep = "-") %>%
   separate(date_rechute_1, into = c("annee_r1","mois_r1","jour_r1"), sep = "-") %>%
   separate(date_rechute_2, into = c("annee_r2","mois_r2","jour_r2"), sep = "-") %>%
-  separate(date_complication_n_1, into = c("annee_complic1","mois__complic1","jour__complic1"), sep = "-") %>%
+  separate(date_complication_n_1, into = c("annee_complic1","mois_complic1","jour_complic1"), sep = "-") %>%
   separate(date_geste1, into = c("annee_g1","mois_g1","jour_g1"), sep = "-") %>%
   separate(date_geste2, into = c("annee_g2","mois_g2","jour_g2"), sep = "-") %>%
   separate(date_derniere_nouvelle_ttt, into = c("annee_dn","mois_dn","jour_dn"), sep = "-") %>%
@@ -418,6 +418,65 @@ base_large <- base_large   %>%
          date_phta_ligne3 = str_c(annee_phta_ligne_3,mois_phta_ligne_3,jour_phta_ligne_3,sep="-"),
          date_phta_ligne4 = str_c(annee_phta_ligne_4,mois_phta_ligne_4,jour_phta_ligne_4,sep="-"),
          date_phta_ligne5 = str_c(annee_phta_ligne_5,mois_phta_ligne_5,jour_phta_ligne_5,sep="-"),
+         date_r1_ligne1 = str_c(annee_r1_ligne_1,mois_r1_ligne_1,jour_r1_ligne_1,sep="-"),
+         date_r1_ligne2 = str_c(annee_r1_ligne_2,mois_r1_ligne_2,jour_r1_ligne_2,sep="-"),
+         date_r1_ligne3 = str_c(annee_r1_ligne_3,mois_r1_ligne_3,jour_r1_ligne_3,sep="-"),
+         date_r1_ligne4 = str_c(annee_r1_ligne_4,mois_r1_ligne_4,jour_r1_ligne_4,sep="-"),
+         date_r1_ligne5 = str_c(annee_r1_ligne_5,mois_r1_ligne_5,jour_r1_ligne_5,sep="-"),
+         date_r2_ligne1 = str_c(annee_r2_ligne_1,mois_r2_ligne_1,jour_r2_ligne_1,sep="-"),
+         date_r2_ligne2 = str_c(annee_r2_ligne_2,mois_r2_ligne_2,jour_r2_ligne_2,sep="-"),
+         date_r2_ligne3 = str_c(annee_r2_ligne_3,mois_r2_ligne_3,jour_r2_ligne_3,sep="-"),
+         date_r2_ligne4 = str_c(annee_r2_ligne_4,mois_r2_ligne_4,jour_r2_ligne_4,sep="-"),
+         date_r2_ligne5 = str_c(annee_r2_ligne_5,mois_r2_ligne_5,jour_r2_ligne_5,sep="-"),
+         date_complic1_ligne1 = str_c(annee_complic1_ligne_1,mois_complic1_ligne_1,jour_complic1_ligne_1,sep="-"),
+         date_complic1_ligne2 = str_c(annee_complic1_ligne_2,mois_complic1_ligne_2,jour_complic1_ligne_2,sep="-"),
+         date_complic1_ligne3 = str_c(annee_complic1_ligne_3,mois_complic1_ligne_3,jour_complic1_ligne_3,sep="-"),
+         date_complic1_ligne4 = str_c(annee_complic1_ligne_4,mois_complic1_ligne_4,jour_complic1_ligne_4,sep="-"),
+         date_complic1_ligne5 = str_c(annee_complic1_ligne_5,mois_complic1_ligne_5,jour_complic1_ligne_5,sep="-"),
+         date_g1_ligne1 = str_c(annee_g1_ligne_1,mois_g1_ligne_1,jour_g1_ligne_1,sep="-"),
+         date_g1_ligne2 = str_c(annee_g1_ligne_2,mois_g1_ligne_2,jour_g1_ligne_2,sep="-"),
+         date_g1_ligne3 = str_c(annee_g1_ligne_3,mois_g1_ligne_3,jour_g1_ligne_3,sep="-"),
+         date_g1_ligne4 = str_c(annee_g1_ligne_4,mois_g1_ligne_4,jour_g1_ligne_4,sep="-"),
+         date_g1_ligne5 = str_c(annee_g1_ligne_5,mois_g1_ligne_5,jour_g1_ligne_5,sep="-"),
+         date_g2_ligne1 = str_c(annee_g2_ligne_1,mois_g2_ligne_1,jour_g2_ligne_1,sep="-"),
+         date_g2_ligne2 = str_c(annee_g2_ligne_2,mois_g2_ligne_2,jour_g2_ligne_2,sep="-"),
+         date_g2_ligne3 = str_c(annee_g2_ligne_3,mois_g2_ligne_3,jour_g2_ligne_3,sep="-"),
+         date_g2_ligne4 = str_c(annee_g2_ligne_4,mois_g2_ligne_4,jour_g2_ligne_4,sep="-"),
+         date_g2_ligne5 = str_c(annee_g2_ligne_5,mois_g2_ligne_5,jour_g2_ligne_5,sep="-"),
+         date_dn_ligne1 = str_c(annee_dn_ligne_1,mois_dn_ligne_1,jour_dn_ligne_1,sep="-"),
+         date_dn_ligne2 = str_c(annee_dn_ligne_2,mois_dn_ligne_2,jour_dn_ligne_2,sep="-"),
+         date_dn_ligne3 = str_c(annee_dn_ligne_3,mois_dn_ligne_3,jour_dn_ligne_3,sep="-"),
+         date_dn_ligne4 = str_c(annee_dn_ligne_4,mois_dn_ligne_4,jour_dn_ligne_4,sep="-"),
+         date_dn_ligne5 = str_c(annee_dn_ligne_5,mois_dn_ligne_5,jour_dn_ligne_5,sep="-")) %>% 
+  select(-contains("annee"), -contains("mois"),-contains("jour"))
+
+# Les dates
+## Mettre les dates au format date
+vardate <- base_large %>% select(contains("date")) %>% colnames
+base_large <- base_large %>% mutate_at(vars(vardate), ymd) 
+
+## Choisir la date la plus recente ou la plus vieille selon les variables
+base_large %>% 
+  mutate(
+    date_premiere_rechute1=pmin(date_r1_ligne1, date_r1_ligne2,date_r1_ligne3,date_r1_ligne4,date_r1_ligne5, na.rm = TRUE),
+    date_premiere_rechute2=pmin(date_r2_ligne1, date_r2_ligne2,date_r2_ligne3,date_r2_ligne4,date_r2_ligne5, na.rm = TRUE),
+    date_j0=pmin(date_j0_ligne1, date_j0_ligne2,date_j0_ligne3,date_j0_ligne4,date_j0_ligne5, na.rm = TRUE),
+    date_fin =pmax(date_fin_ligne1, date_fin_ligne2, date_fin_ligne3, date_fin_ligne4, date_fin_ligne5, na.rm = TRUE),
+    date_premiere_statine = pmin(date_ps_ligne1, date_ps_ligne2,date_ps_ligne3,date_ps_ligne4,date_ps_ligne5, na.rm = TRUE),
+    date_premiere_prednisone = pmin(date_ppred_ligne1, date_ppred_ligne2,date_ppred_ligne3,date_ppred_ligne4,date_ppred_ligne5, na.rm = TRUE),
+    date_premiere_is = pmin(date_pis_ligne1, date_pis_ligne2,date_pis_ligne3,date_pis_ligne4,date_pis_ligne5, na.rm = TRUE),
+    date_premiere_aspirine = pmin(date_pasp_ligne1, date_pasp_ligne2,date_pasp_ligne3,date_pasp_ligne4,date_pasp_ligne5, na.rm = TRUE),
+    date_premiere_hta = pmin(date_phta_ligne1, date_phta_ligne2,date_phta_ligne3,date_phta_ligne4,date_phta_ligne5, na.rm = TRUE),
+    date_premiere_complication = pmin(date_complic1_ligne1,date_complic1_ligne2,date_complic1_ligne3,date_complic1_ligne4,date_complic1_ligne5, na.rm = TRUE),
+    date_premiere_geste1 = pmin(date_g1_ligne1, date_g1_ligne2,date_g1_ligne3,date_g1_ligne4,date_g1_ligne5, na.rm = TRUE),
+    date_premiere_geste2 = pmin(date_g2_ligne1, date_g2_ligne2,date_g2_ligne3,date_g2_ligne4,date_g2_ligne5, na.rm = TRUE)
+    
+    
+    
+    
+  )
+ 
+  
          
          
          
