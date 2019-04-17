@@ -381,7 +381,48 @@ base_large <- base_large   %>%
   separate(ligne_2, str_c(vars_tot, "_ligne_2", sep=c(""))) %>%
   separate(ligne_3, str_c(vars_tot, "_ligne_3", sep=c(""))) %>% 
   separate(ligne_4, str_c(vars_tot, "_ligne_4", sep=c(""))) %>% 
-  separate(ligne_5, str_c(vars_tot, "_ligne_5", sep=c(""))) 
+  separate(ligne_5, str_c(vars_tot, "_ligne_5", sep=c(""))) %>% 
+
+  mutate(date_fin_ligne1 = str_c(annee_fin_ligne_1,mois_fin_ligne_1,jour_fin_ligne_1,sep="-"),
+         date_fin_ligne2 = str_c(annee_fin_ligne_2,mois_fin_ligne_2,jour_fin_ligne_2,sep="-"),
+         date_fin_ligne3 = str_c(annee_fin_ligne_3,mois_fin_ligne_3,jour_fin_ligne_3,sep="-"),
+         date_fin_ligne4 = str_c(annee_fin_ligne_4,mois_fin_ligne_4,jour_fin_ligne_4,sep="-"),
+         date_fin_ligne5 = str_c(annee_fin_ligne_5,mois_fin_ligne_5,jour_fin_ligne_5,sep="-"),
+         date_j0_ligne1 = str_c(annee_j0_ligne_1,mois_j0_ligne_1,jour_j0_ligne_1,sep="-"),
+         date_j0_ligne2 = str_c(annee_j0_ligne_2,mois_j0_ligne_2,jour_j0_ligne_2,sep="-"),
+         date_j0_ligne3 = str_c(annee_j0_ligne_3,mois_j0_ligne_3,jour_j0_ligne_3,sep="-"),
+         date_j0_ligne4 = str_c(annee_j0_ligne_4,mois_j0_ligne_4,jour_j0_ligne_4,sep="-"),
+         date_j0_ligne5 = str_c(annee_j0_ligne_5,mois_j0_ligne_5,jour_j0_ligne_5,sep="-"),
+         date_ps_ligne1 = str_c(annee_ps_ligne_1,mois_ps_ligne_1,jour_ps_ligne_1,sep="-"),
+         date_ps_ligne2 = str_c(annee_ps_ligne_2,mois_ps_ligne_2,jour_ps_ligne_2,sep="-"),
+         date_ps_ligne3 = str_c(annee_ps_ligne_3,mois_ps_ligne_3,jour_ps_ligne_3,sep="-"),
+         date_ps_ligne4 = str_c(annee_ps_ligne_4,mois_ps_ligne_4,jour_ps_ligne_4,sep="-"),
+         date_ps_ligne5 = str_c(annee_ps_ligne_5,mois_ps_ligne_5,jour_ps_ligne_5,sep="-"),
+         date_ppred_ligne1 = str_c(annee_ppred_ligne_1,mois_ppred_ligne_1,jour_ppred_ligne_1,sep="-"),
+         date_ppred_ligne2 = str_c(annee_ppred_ligne_2,mois_ppred_ligne_2,jour_ppred_ligne_2,sep="-"),
+         date_ppred_ligne3 = str_c(annee_ppred_ligne_3,mois_ppred_ligne_3,jour_ppred_ligne_3,sep="-"),
+         date_ppred_ligne4 = str_c(annee_ppred_ligne_4,mois_ppred_ligne_4,jour_ppred_ligne_4,sep="-"),
+         date_ppred_ligne5 = str_c(annee_ppred_ligne_5,mois_ppred_ligne_5,jour_ppred_ligne_5,sep="-"),
+         date_pis_ligne1 = str_c(annee_pis_ligne_1,mois_pis_ligne_1,jour_pis_ligne_1,sep="-"),
+         date_pis_ligne2 = str_c(annee_pis_ligne_2,mois_pis_ligne_2,jour_pis_ligne_2,sep="-"),
+         date_pis_ligne3 = str_c(annee_pis_ligne_3,mois_pis_ligne_3,jour_pis_ligne_3,sep="-"),
+         date_pis_ligne4 = str_c(annee_pis_ligne_4,mois_pis_ligne_4,jour_pis_ligne_4,sep="-"),
+         date_pis_ligne5 = str_c(annee_pis_ligne_5,mois_pis_ligne_5,jour_pis_ligne_5,sep="-"),
+         date_pasp_ligne1 = str_c(annee_pasp_ligne_1,mois_pasp_ligne_1,jour_pasp_ligne_1,sep="-"),
+         date_pasp_ligne2 = str_c(annee_pasp_ligne_2,mois_pasp_ligne_2,jour_pasp_ligne_2,sep="-"),
+         date_pasp_ligne3 = str_c(annee_pasp_ligne_3,mois_pasp_ligne_3,jour_pasp_ligne_3,sep="-"),
+         date_pasp_ligne4 = str_c(annee_pasp_ligne_4,mois_pasp_ligne_4,jour_pasp_ligne_4,sep="-"),
+         date_pasp_ligne5 = str_c(annee_pasp_ligne_5,mois_pasp_ligne_5,jour_pasp_ligne_5,sep="-"),
+         date_phta_ligne1 = str_c(annee_phta_ligne_1,mois_phta_ligne_1,jour_phta_ligne_1,sep="-"),
+         date_phta_ligne2 = str_c(annee_phta_ligne_2,mois_phta_ligne_2,jour_phta_ligne_2,sep="-"),
+         date_phta_ligne3 = str_c(annee_phta_ligne_3,mois_phta_ligne_3,jour_phta_ligne_3,sep="-"),
+         date_phta_ligne4 = str_c(annee_phta_ligne_4,mois_phta_ligne_4,jour_phta_ligne_4,sep="-"),
+         date_phta_ligne5 = str_c(annee_phta_ligne_5,mois_phta_ligne_5,jour_phta_ligne_5,sep="-"),
+         
+         
+         
+         
+         
 
 # On remet en facteur
 base_large <- base_large  %>% mutate_at(vars(base_large [,map_dbl(base_large ,~length(table(.)))%in%c("1","2")] %>% colnames), as.factor) 
