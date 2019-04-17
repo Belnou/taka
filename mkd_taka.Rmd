@@ -27,6 +27,40 @@ knitr::knit("nb_taka_datamanagement.Rmd")
 Exclusion: 
 Patients 16 et 52 pour manque de donnees
 
+#Rechute et variables baselines
+## Univarie
+```{r echo=FALSE}
+bd_l$presence_rechute1<- as.factor(bd_l$presence_rechute1)
+varnames <- c("age_au_dg_baseline", "hta_diag_baseline", "dysplipidemie_diag_baseline", "diabete_diag_baseline", "tabac_diag_baseline")
+univ <- map_df(varnames, function(varname){glm(presence_rechute1~ bd_l[[varname]], data = bd_l, family="binomial") %>% tidy(conf.int = T) %>% 
+mutate(OR = exp(estimate)) %>% 
+  select(term, estimate, OR, conf.low, conf.high, p.value) %>% 
+  mutate_at(vars(p.value), function(x) round(x, 4))%>%
+  mutate_at(vars(OR,conf.low, conf.high ,estimate), function(x) round(x, 4)) 
+}) %>% 
+  filter(term !="(Intercept)") %>% 
+  mutate(term = varnames)
+univ
+```
+
+### Verification pour le tabac
+
+```{r}
+my_tab <- table(bd_l$tabac_diag_baseline, bd_l$presence_rechute1, deparse.level=2, useNA = "always")
+my_tab
+round(prop.table(my_tab ,2),digits = 2)
+```
+
+```{r, echo=FALSE}
+c <- fisher.test(bd_l$presence_rechute1 , bd_l$tabac_diag_baseline)$p.value
+print(paste("Test Exact de Fisher, p.value = ", round(c, digits = 3)))
+
+```
+
+```{r, echo=FALSE}
+print(paste("odds ratio =  0.1311 "))
+```
+
 #Statine
 
 ```{r echo=FALSE}
@@ -274,4 +308,3 @@ ggsurvplot(fit0,
 
 
 
-#Rechute et variables baselines
