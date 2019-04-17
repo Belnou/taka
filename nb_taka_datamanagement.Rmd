@@ -204,9 +204,9 @@ mabase <- mabase %>%
 # Presence PREDNISONE dans la ligne th et la date du premier prednisone qui apparait dans la ligne therapeutique
 mabase <- mabase %>%  
   mutate(presence_prednisone =  pmax(prednisone_j0_ttt ,prednisone_m3_ttt, prednisone_m6_ttt,prednisone_m12_ttt, prednisone_m18_ttt, prednisone_3_ans_ttt, na.rm=T)) %>% 
-  mutate(presence_prednisone = ifelse(is.na(presence_prednisone),0,presence_prednisone))
+  mutate(presence_prednisone = ifelse(is.na(presence_prednisone),0,presence_prednisone)) %>% 
 
-  mutate(date_prednisone_J0 = ymd(case_when(
+  mutate(date_prednisone_j0 = ymd(case_when(
     prednisone_j0_ttt==1~ date_j0_ttt
   ))) %>% 
     mutate(date_prednisone_m3 = ymd(case_when(
@@ -225,14 +225,14 @@ mabase <- mabase %>%
     prednisone_3_ans_ttt==1~ ans_3_ttt
   ))) %>%
   
-  mutate(date_premiere_prednisone = pmin(date_prednisone_J0,date_prednisone_m3,date_prednisone_m6,date_prednisone_m12,date_prednisone_m18,date_prednisone_3ans, na.rm=TRUE))
+  mutate(date_premiere_prednisone = pmin(date_prednisone_j0,date_prednisone_m3,date_prednisone_m6,date_prednisone_m12,date_prednisone_m18,date_prednisone_3ans, na.rm=TRUE))
 
 # Presence IS dans la ligne th et la date du premier is qui apparait dans la ligne therapeutique
 mabase <- mabase %>%  
   mutate(presence_is =  pmax(is_j0_ttt ,is_m3_ttt, is_m6_ttt ,is_m12_ttt, is_m18_ttt, is_3_ans_ttt, na.rm=T)) %>% 
-  mutate(presence_is= ifelse(is.na(presence_is),0,presence_is))
+  mutate(presence_is= ifelse(is.na(presence_is),0,presence_is)) %>% 
 
-  mutate(date_is_J0 = ymd(case_when(
+  mutate(date_is_j0 = ymd(case_when(
     is_j0_ttt==1~ date_j0_ttt
   ))) %>% 
     mutate(date_is_m3 = ymd(case_when(
@@ -251,10 +251,7 @@ mabase <- mabase %>%
     is_3_ans_ttt==1~ ans_3_ttt
   ))) %>%
   
-  mutate(date_premiere_is = pmin(date_is_J0,date_is_m3,date_is_m6,date_is_m12,date_is_m18,date_is_3ans, na.rm=TRUE))
-
-  mabase %>% select(contains("is_"), contains("statine")) %>% colnames
-
+  mutate(date_premiere_is = pmin(date_is_j0,date_is_m3,date_is_m6,date_is_m12,date_is_m18,date_is_3ans, na.rm=TRUE))
 
 
 # Presence ASPIRINE dans la ligne et la date du premier aspirine qui apparait dans la ligne therapeutique
@@ -262,7 +259,7 @@ mabase <- mabase %>%
   mutate(presence_aspirine =  pmax(aspirine_j0_ttt ,aspirine_m3_ttt, aspirine_m6_ttt ,aspirine_m12_ttt, aspirine_m18_ttt, aspirine_3_ans_ttt, na.rm=T)) %>% 
   mutate(presence_aspirine = ifelse(is.na(presence_aspirine),0,presence_aspirine)) %>% 
 
-  mutate(date_aspirine_J0 = ymd(case_when(
+  mutate(date_aspirine_j0 = ymd(case_when(
     aspirine_j0_ttt==1~ date_j0_ttt
   ))) %>% 
     mutate(date_aspirine_m3 = ymd(case_when(
@@ -281,7 +278,7 @@ mabase <- mabase %>%
     aspirine_3_ans_ttt==1~ ans_3_ttt
   ))) %>%
   
-  mutate(date_premiere_aspirine = pmin(date_aspirine_J0,date_aspirine_m3,date_aspirine_m6,date_aspirine_m12,date_aspirine_m18,date_aspirine_3ans, na.rm=TRUE))
+  mutate(date_premiere_aspirine = pmin(date_aspirine_j0,date_aspirine_m3,date_aspirine_m6,date_aspirine_m12,date_aspirine_m18,date_aspirine_3ans, na.rm=TRUE))
 
 
 # Presence ANTI_HTA dans la ligne et date du premier antiHTA dans la ligne
@@ -297,7 +294,7 @@ mabase <- mabase %>%
     mutate(presence_antihta =  pmax(antihta_j0_ttt ,antihta_m3_ttt, antihta_m6_ttt ,antihta_m12_ttt,     antihta_m18_ttt, antihta_3_ans_ttt, na.rm=T)) %>% 
     mutate(presence_antihta = ifelse(is.na(presence_antihta),0,presence_antihta)) %>% 
 
-  mutate(date_antihta_J0 = ymd(case_when(
+  mutate(date_antihta_j0 = ymd(case_when(
     antihta_j0_ttt==1~ date_j0_ttt
   ))) %>% 
     mutate(date_antihta_m3 = ymd(case_when(
@@ -316,9 +313,8 @@ mabase <- mabase %>%
     antihta_3_ans_ttt==1~ ans_3_ttt
   ))) %>%
   
-  mutate(date_premiere_antihta = pmin(date_antihta_J0,date_antihta_m3,date_antihta_m6,date_antihta_m12,date_antihta_m18,date_antihta_3ans, na.rm=TRUE))
+  mutate(date_premiere_antihta = pmin(date_antihta_j0,date_antihta_m3,date_antihta_m6,date_antihta_m12,date_antihta_m18,date_antihta_3ans, na.rm=TRUE))
 
-  
 ```
 
 RESTRICTION BASE DE DONNEES, EXCLUSION DE PATIENTS
@@ -327,34 +323,22 @@ mabase <- mabase %>% filter(n!=16 & n!=52)
 ```
 ####
 
-####
+
 CREATION D'UNE BASE DE DONNEE LARGE, une ligne = un patient <- base_large
 On part du travail effectue pour  mabase
 ```{r echo=FALSE}
+# Selection de variables d'interets
+# Dates que je veux virer
+date_inutile <- mabase %>% select(contains("date"), -date_complication_n_1,-date_complication_n_1, -date_geste1,-date_geste2, -date_rechute_1, -date_rechute_2, -date_j0_ttt, -date_fin_ligne_therapeutique_ttt, -date_derniere_nouvelle_ttt, -date_premiere_statine, -date_premiere_prednisone, -date_premiere_is, -date_premiere_aspirine, -date_premiere_antihta) %>% colnames
 
-var_bd1_large <- bd1 %>% select(
-  n,
-  contains("compl"),
-  contains("gest"),
-  contains("rech")
-)
+base_large <- mabase %>% select(-si_arret_prednisone__m18_ttt, -date_inutile, -geste_3,-geste_4,-geste_5,-geste_6)
 
-var_traitement_large <- bd_traitement %>% select(
-  num_ligne_ttt, 
-  contains("prednisone"),
-  contains("is_"),
-  contains("stat"),
-  contains("aspi"),
-  contains("hta")
-)
+```
 
 
-base_large <- cbind(
-  var_bd1_large, 
-  var_traitement_large
-  )
 
-base_large <- base_large %>% select(-contains("date"), -si_arret_prednisone__m18_ttt)
+```{r}
+
 
 #1 Mettre les variables facteur en facteur
 base_large <- base_large  %>% mutate_at(vars(base_large [,map_dbl(base_large ,~length(table(.)))%in%c("1","2")] %>% colnames), as.factor)
