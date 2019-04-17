@@ -570,6 +570,22 @@ base_large <- base_large %>%
 # Selection finale des variabels 
 
 base_large <- base_large %>% select(n, contains("essai2"), contains("date")) 
+
+# Et renommer les variables
+base_large <- base_large%>% 
+  rename(
+    presence_rechute1 = "presence_rechute1_essai2",
+    presence_rechute2 = "presence_rechute2_essai2",
+    presence_prednisone = "presence_prednisone_essai2",
+    presence_statine = "presence_statine_essai2",
+    presence_aspirine = "presence_aspirine_essai2",
+    presence_antihta = "presence_antihta_essai2",
+    presence_is = "presence_is_essai2",
+    presence_complication = "presence_complication1_essai2",
+    presence_geste1 = "presence_geste1_essai2",
+    presence_geste2 = "presence_geste2_essai2"
+  )
+
 # On remet en facteur
 #base_large <- base_large  %>% mutate_at(vars(base_large [,map_dbl(base_large ,~length(table(.)))%in%c("1","2")] %>% colnames), as.factor) 
 
@@ -578,13 +594,4 @@ base_large %>% filter(n==35) %>% select(contains("date"))
 ```
 
 
-
-```{r}
-
-```
-
-
-```{r}
-
-```
 
