@@ -344,18 +344,14 @@ base_large <- base_large %>% select(n,num_ligne_ttt,contains("presence"), contai
 base_large <- base_large  %>% mutate_at(vars(base_large [,map_dbl(base_large ,~length(table(.)))%in%c("1","2")] %>% select(-date_geste2) %>% colnames), as.factor)
 
 
-vars_large <- base_large %>% select(-n, -num_ligne_ttt) %>% colnames
+vars_large_sans_date <- base_large %>% select(-n, -num_ligne_ttt, -contains("date")) %>% colnames
+vars_large_date <- c("annee_fin","mois_fin","jour_fin","annee_j0","mois_j0","jour_j0","annee_ps","mois_ps","jour_ps","annee_ppred","mois_ppred","jour_ppred","annee_pis","mois_pis","jour_pis","annee_pasp","mois_pasp","jour_pasp","annee_phta","mois_phta","jour_phta","annee_r1","mois_r1","jour_r1","annee_r2","mois_r2","jour_r2","annee_complic1","mois__complic1","jour__complic1","annee_g1","mois_g1","jour_g1","annee_g2","mois_g2","jour_g2","annee_dn","mois_dn","jour_dn")
 
-base_large %>%  colnames
-```
-
-
-
-```{r}
+vars_tot <- c(vars_large_sans_date, vars_large_date)
 
 
 base_large <- base_large   %>% 
-  mutate_at(vars(date_fin_ligne_therapeutique_ttt, date_j0_ttt, date_premiere_statine,date_premiere_prednisone, date_premiere_is, date_premiere_aspirine,date_premiere_antihta, date_rechute_1, date_rechute_2 ,date_complication_n_1, date_geste1, date_geste2, date_derniere_nouvelle_ttt), as.character) %>%
+  mutate_at(vars(date_fin_ligne_therapeutique_ttt, date_j0_ttt, date_premiere_statine,date_premiere_prednisone, date_premiere_is, date_premiere_aspirine, date_premiere_antihta, date_rechute_1, date_rechute_2 ,date_complication_n_1, date_geste1, date_geste2, date_derniere_nouvelle_ttt), as.character) %>%
   
   separate(date_fin_ligne_therapeutique_ttt, into = c("annee_fin","mois_fin","jour_fin"), sep = "-") %>% 
   separate(date_j0_ttt, into = c("annee_j0","mois_j0","jour_j0"), sep = "-") %>% 
@@ -371,8 +367,6 @@ base_large <- base_large   %>%
   separate(date_geste2, into = c("annee_g2","mois_g2","jour_g2"), sep = "-") %>%
   separate(date_derniere_nouvelle_ttt, into = c("annee_dn","mois_dn","jour_dn"), sep = "-") %>%
   
-  
-  
   mutate(num_ligne_ttt = case_when(
     num_ligne_ttt==1~"ligne_1",
     num_ligne_ttt==2~"ligne_2",
@@ -381,13 +375,13 @@ base_large <- base_large   %>%
     num_ligne_ttt==5~"ligne_5",
     TRUE~"exclure"
     )) %>% 
-  unite(xxx, vars_large, sep=" ") %>% 
+  unite(xxx, vars_tot, sep=" ") %>% 
   spread(num_ligne_ttt, xxx) %>% 
-  separate(ligne_1, str_c(vars_large, "_ligne_1", sep=c(""))) %>% 
-  separate(ligne_2, str_c(vars_large, "_ligne_2", sep=c(""))) %>%
-  separate(ligne_3, str_c(vars_large, "_ligne_3", sep=c(""))) %>% 
-  separate(ligne_4, str_c(vars_large, "_ligne_4", sep=c(""))) %>% 
-  separate(ligne_5, str_c(vars_large, "_ligne_5", sep=c(""))) 
+  separate(ligne_1, str_c(vars_tot, "_ligne_1", sep=c(""))) %>% 
+  separate(ligne_2, str_c(vars_tot, "_ligne_2", sep=c(""))) %>%
+  separate(ligne_3, str_c(vars_tot, "_ligne_3", sep=c(""))) %>% 
+  separate(ligne_4, str_c(vars_tot, "_ligne_4", sep=c(""))) %>% 
+  separate(ligne_5, str_c(vars_tot, "_ligne_5", sep=c(""))) 
 
 # On remet en facteur
 base_large <- base_large  %>% mutate_at(vars(base_large [,map_dbl(base_large ,~length(table(.)))%in%c("1","2")] %>% colnames), as.factor) 
