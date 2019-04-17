@@ -333,15 +333,16 @@ date_inutile <- mabase %>% select(contains("date"), -date_complication_n_1,-date
 
 base_large <- mabase %>% select(-si_arret_prednisone__m18_ttt, -date_inutile, -geste_3,-geste_4,-geste_5,-geste_6)
 
+# On ne garde que les presence de molecule dans la ligne et pas le detail a chaque temps de consultation
+base_large <- base_large %>% select(n,num_ligne_ttt,contains("presence"), contains("date"), contains("complication"), contains("rechute"), contains("geste"))
+# --> en ce moment on a toujours une base longue
 ```
 
 
 
 ```{r}
-
-
 #1 Mettre les variables facteur en facteur
-base_large <- base_large  %>% mutate_at(vars(base_large [,map_dbl(base_large ,~length(table(.)))%in%c("1","2")] %>% colnames), as.factor)
+base_large <- base_large  %>% mutate_at(vars(base_large [,map_dbl(base_large ,~length(table(.)))%in%c("1","2")] %>% select(-date_geste2) %>% colnames), as.factor)
 
 
 vars_large <- base_large %>% select(-n, -num_ligne_ttt) %>% colnames
