@@ -462,17 +462,18 @@ base_large <- base_large %>%
     date_premiere_rechute2=pmin(date_r2_ligne1, date_r2_ligne2,date_r2_ligne3,date_r2_ligne4,date_r2_ligne5, na.rm = TRUE),
     date_j0=pmin(date_j0_ligne1, date_j0_ligne2,date_j0_ligne3,date_j0_ligne4,date_j0_ligne5, na.rm = TRUE),
     date_fin =pmax(date_fin_ligne1, date_fin_ligne2, date_fin_ligne3, date_fin_ligne4, date_fin_ligne5, na.rm = TRUE),
+    date_derniere_nouvelle =pmax(date_dn_ligne1, date_dn_ligne2, date_dn_ligne3, date_dn_ligne4, date_dn_ligne5, na.rm = TRUE),
     date_premiere_statine = pmin(date_ps_ligne1, date_ps_ligne2,date_ps_ligne3,date_ps_ligne4,date_ps_ligne5, na.rm = TRUE),
     date_premiere_prednisone = pmin(date_ppred_ligne1, date_ppred_ligne2,date_ppred_ligne3,date_ppred_ligne4,date_ppred_ligne5, na.rm = TRUE),
     date_premiere_is = pmin(date_pis_ligne1, date_pis_ligne2,date_pis_ligne3,date_pis_ligne4,date_pis_ligne5, na.rm = TRUE),
     date_premiere_aspirine = pmin(date_pasp_ligne1, date_pasp_ligne2,date_pasp_ligne3,date_pasp_ligne4,date_pasp_ligne5, na.rm = TRUE),
     date_premiere_hta = pmin(date_phta_ligne1, date_phta_ligne2,date_phta_ligne3,date_phta_ligne4,date_phta_ligne5, na.rm = TRUE),
-    date_premiere_complication = pmin(date_complic1_ligne1,date_complic1_ligne2,date_complic1_ligne3,date_complic1_ligne4,date_complic1_ligne5, na.rm = TRUE),
+    date_premiere_complication1 = pmin(date_complic1_ligne1,date_complic1_ligne2,date_complic1_ligne3,date_complic1_ligne4,date_complic1_ligne5, na.rm = TRUE),
     date_premiere_geste1 = pmin(date_g1_ligne1, date_g1_ligne2,date_g1_ligne3,date_g1_ligne4,date_g1_ligne5, na.rm = TRUE),
     date_premiere_geste2 = pmin(date_g2_ligne1, date_g2_ligne2,date_g2_ligne3,date_g2_ligne4,date_g2_ligne5, na.rm = TRUE))
     
 ## Selection des variables dates que l'on veut garder
-var_date_ejection <- base_large %>% select(contains("date"), -date_j0, -date_fin, -contains("premiere")) %>% colnames
+var_date_ejection <- base_large %>% select(contains("date"), -date_j0, -date_fin,-date_derniere_nouvelle, -contains("premiere")) %>% colnames
 
 base_large <- base_large %>% select(-var_date_ejection)         
          
@@ -507,8 +508,8 @@ base_large <- base_large %>%  mutate(
     !is.na(date_premiere_hta)~1,
     TRUE~0
   ),
-    presence_complication_essai = case_when(
-    !is.na(date_premiere_complication)~1,
+    presence_complication1_essai = case_when(
+    !is.na(date_premiere_complication1)~1,
     TRUE~0
   ),
     presence_geste1_essai = case_when(
@@ -521,57 +522,58 @@ base_large <- base_large %>%  mutate(
   ))
   
 ## essai technique 2 = contruction des presence en fonction des variables presence
-base_large %>% 
+base_large <- base_large %>% 
   mutate(
     presence_rechute1_essai2 = case_when(
-    rechute_1_ligne_1=="1"| rechute_1_ligne_2=="1"| rechute_1_ligne_3=="1"| rechute_1_ligne_4=="1"|  rechute_1_ligne_5=="1"~1,
-    TRUE ~ 0
-  ),
+      rechute_1_ligne_1=="1"| rechute_1_ligne_2=="1"| rechute_1_ligne_3=="1"| rechute_1_ligne_4=="1"|  rechute_1_ligne_5=="1"~1,
+      TRUE ~ 0
+    ),
     presence_rechute2_essai2 = case_when(
-    rechute_2_ligne_1=="1"| rechute_2_ligne_2=="1"| rechute_2_ligne_3=="1"| rechute_2_ligne_4=="1"|  rechute_2_ligne_5=="1"~1,
-    TRUE ~ 0
-  ),
-  
-  ### J'en suis la 
-    presence_statine_essai2 = case_when(
-    presence_statine_ligne_1=="1"| presence_statine_ligne_2=="1"| presence_statine_ligne_3=="1"| presence_statine_ligne_4=="1"|  presence_statine_ligne_5=="1"~1,
-    TRUE ~ 0
-  ),
+      rechute_2_ligne_1=="1"| rechute_2_ligne_2=="1"| rechute_2_ligne_3=="1"| rechute_2_ligne_4=="1"|  rechute_2_ligne_5=="1"~1,
+      TRUE ~ 0
+    ),
     presence_prednisone_essai2 = case_when(
-    presence_statine_ligne_1=="1"| presence_statine_ligne_2=="1"| presence_statine_ligne_3=="1"| presence_statine_ligne_4=="1"|  presence_statine_ligne_5=="1"~1,
-    TRUE~0
-  ),
-    presence_is_essai2 = case_when(
-    presence_statine_ligne_1=="1"| presence_statine_ligne_2=="1"| presence_statine_ligne_3=="1"| presence_statine_ligne_4=="1"|  presence_statine_ligne_5=="1"~1,
-    TRUE~0
-  ),
+      presence_prednisone_ligne_1=="1"| presence_prednisone_ligne_2=="1"| presence_prednisone_ligne_3=="1"| presence_prednisone_ligne_4=="1"|  presence_prednisone_ligne_5=="1"~1,
+      TRUE ~ 0
+    ),
+    presence_statine_essai2 = case_when(
+      presence_statine_ligne_1=="1"| presence_statine_ligne_2=="1"| presence_statine_ligne_3=="1"| presence_statine_ligne_4=="1"| presence_statine_ligne_5=="1"~ 1,
+      TRUE~0
+    ),
     presence_aspirine_essai2 = case_when(
-    presence_statine_ligne_1=="1"| presence_statine_ligne_2=="1"| presence_statine_ligne_3=="1"| presence_statine_ligne_4=="1"|  presence_statine_ligne_5=="1"~1,
-    TRUE~0
-  ),
-    presence_hta_essai2 = case_when(
-    presence_statine_ligne_1=="1"| presence_statine_ligne_2=="1"| presence_statine_ligne_3=="1"| presence_statine_ligne_4=="1"|  presence_statine_ligne_5=="1"~1,
-    TRUE~0
-  ),
-    presence_complication_essai2 = case_when(
-    presence_statine_ligne_1=="1"| presence_statine_ligne_2=="1"| presence_statine_ligne_3=="1"| presence_statine_ligne_4=="1"|  presence_statine_ligne_5=="1"~1,
-    TRUE~0
-  ),
+      presence_aspirine_ligne_1=="1"| presence_aspirine_ligne_2=="1"| presence_aspirine_ligne_3=="1"| presence_aspirine_ligne_4=="1"|  presence_aspirine_ligne_5=="1"~1,
+      TRUE~0
+    ),
+    presence_antihta_essai2 = case_when(
+      presence_antihta_ligne_1=="1"| presence_antihta_ligne_2=="1"| presence_antihta_ligne_3=="1"| presence_antihta_ligne_4=="1"|  presence_antihta_ligne_5=="1"~1,
+      TRUE~0
+    ),
+    presence_is_essai2 = case_when(
+      presence_is_ligne_1=="1"| presence_is_ligne_2=="1"| presence_is_ligne_3=="1"| presence_is_ligne_4=="1"|  presence_is_ligne_5=="1"~1,
+      TRUE~0
+    ),
+    presence_complication1_essai2 = case_when(
+      complication_1_ligne_1=="1"| complication_1_ligne_2=="1"| complication_1_ligne_3=="1"| complication_1_ligne_4=="1"|  complication_1_ligne_5=="1"~1,
+      TRUE~0
+    ),
     presence_geste1_essai2 = case_when(
-    presence_statine_ligne_1=="1"| presence_statine_ligne_2=="1"| presence_statine_ligne_3=="1"| presence_statine_ligne_4=="1"|  presence_statine_ligne_5=="1"~1,
-    TRUE~0
-  ),
+      geste_1_ligne_1=="1"| geste_1_ligne_2=="1"| geste_1_ligne_3=="1"| geste_1_ligne_4=="1"|  geste_1_ligne_5=="1"~1,
+      TRUE~0
+    ),
     presence_geste2_essai2 = case_when(
-    presence_statine_ligne_1=="1"| presence_statine_ligne_2=="1"| presence_statine_ligne_3=="1"| presence_statine_ligne_4=="1"|  presence_statine_ligne_5=="1"~1,
-    TRUE~0
-  ))
+      geste_2_ligne_1=="1"| geste_2_ligne_2=="1"| geste_2_ligne_3=="1"| geste_2_ligne_4=="1"|  geste_2_ligne_5=="1"~1,
+      TRUE~0
+    ))
+#### Comparaison Technique 1 et 2
+# ----> Les deux techniques donnent la meme chose donc le codage est bon. presence_essai2
 
-base_large %>% colnames        
+# Selection finale des variabels 
 
+base_large <- base_large %>% select(n, contains("essai2"), contains("date")) 
 # On remet en facteur
-base_large <- base_large  %>% mutate_at(vars(base_large [,map_dbl(base_large ,~length(table(.)))%in%c("1","2")] %>% colnames), as.factor) 
+#base_large <- base_large  %>% mutate_at(vars(base_large [,map_dbl(base_large ,~length(table(.)))%in%c("1","2")] %>% colnames), as.factor) 
 
-base_large %>% select(n, num_ligne_ttt) %>% filter(is.na(num_ligne_ttt))
+base_large %>% filter(n==35) %>% select(contains("date"))
 
 ```
 
