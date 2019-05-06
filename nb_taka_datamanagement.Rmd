@@ -171,6 +171,7 @@ mabase <- cbind(
   var_traitement
   )
 
+
 ```
 
 COMPLETE Mabase avec les variables d'interets, creation d'outcomes etc 
@@ -227,6 +228,42 @@ mabase <- mabase %>%
   
   mutate(date_premiere_prednisone = pmin(date_prednisone_j0,date_prednisone_m3,date_prednisone_m6,date_prednisone_m12,date_prednisone_m18,date_prednisone_3ans, na.rm=TRUE))
 
+# Presence d'une dose de prednisone >15mg  et date de la premiere fois ou cette dose apparait
+mabase <- mabase %>%
+  mutate(
+    prednisone_seuil_jO = ifelse(dose_prednisone_j0_ttt>=15, 1, 0),
+    prednisone_seuil_m3 = ifelse(dose_prednisone_m3_ttt>=15, 1, 0),
+    prednisone_seuil_m6 = ifelse(dose_prednisone_m6_ttt>=15, 1, 0),
+    prednisone_seuil_m12 = ifelse(dose_prednisone_m12_ttt>=15, 1, 0),
+    prednisone_seuil_m18 = ifelse(dose_prednisone_m18_ttt>=15, 1, 0),
+    prednisone_seuil_3ans = ifelse(dose_prednisone_3_ans_ttt>=15, 1, 0)
+  ) %>% 
+  mutate(
+    presence_prednisone_seuil =  pmax(prednisone_seuil_jO ,prednisone_seuil_m3,  prednisone_seuil_m6,prednisone_seuil_m12, prednisone_seuil_m18, prednisone_seuil_3ans, na.rm=T)
+    ) %>% 
+  mutate(
+    presence_prednisone_seuil = ifelse(is.na(presence_prednisone_seuil),0,presence_prednisone_seuil)
+    ) %>% 
+  mutate(date_prednisone_j0_seuil = ymd(case_when(
+    prednisone_seuil_jO==1~ date_j0_ttt
+  ))) %>% 
+    mutate(date_prednisone_m3_seuil = ymd(case_when(
+    prednisone_seuil_m3==1~ m3_ttt
+  ))) %>%
+    mutate(date_prednisone_m6_seuil = ymd(case_when(
+    prednisone_seuil_m6==1~ m6_ttt
+  ))) %>%
+    mutate(date_prednisone_m12_seuil = ymd(case_when(
+    prednisone_seuil_m12==1~ m12_ttt
+  ))) %>%
+    mutate(date_prednisone_m18_seuil = ymd(case_when(
+    prednisone_seuil_m18==1~ m18_ttt
+  ))) %>%
+    mutate(date_prednisone_3ans_seuil = ymd(case_when(
+    prednisone_seuil_3ans==1~ ans_3_ttt
+  ))) %>%
+  mutate(date_premiere_prednisone_seuil = pmin(date_prednisone_j0_seuil,date_prednisone_m3_seuil,date_prednisone_m6_seuil,date_prednisone_m12_seuil,date_prednisone_m18_seuil,date_prednisone_3ans_seuil, na.rm=TRUE))    
+    
 # Presence IS dans la ligne th et la date du premier is qui apparait dans la ligne therapeutique
 mabase <- mabase %>%  
   mutate(presence_is =  pmax(is_j0_ttt ,is_m3_ttt, is_m6_ttt ,is_m12_ttt, is_m18_ttt, is_3_ans_ttt, na.rm=T)) %>% 
@@ -329,7 +366,7 @@ On part du travail effectue pour  mabase
 ```{r echo=FALSE}
 # Selection de variables d'interets
 # Dates que je veux virer
-date_inutile <- mabase %>% select(contains("date"), -date_complication_n_1,-date_complication_n_1, -date_geste1,-date_geste2, -date_rechute_1, -date_rechute_2, -date_j0_ttt, -date_fin_ligne_therapeutique_ttt, -date_derniere_nouvelle_ttt, -date_premiere_statine, -date_premiere_prednisone, -date_premiere_is, -date_premiere_aspirine, -date_premiere_antihta) %>% colnames
+date_inutile <- mabase %>% select(contains("date"), -date_complication_n_1,-date_complication_n_1, -date_geste1,-date_geste2, -date_rechute_1, -date_rechute_2, -date_j0_ttt, -date_fin_ligne_therapeutique_ttt, -date_derniere_nouvelle_ttt, -date_premiere_statine, -date_premiere_prednisone, -date_premiere_is, -date_premiere_aspirine, -date_premiere_antihta, -date_premiere_prednisone_seuil) %>% colnames
 
 base_large <- mabase %>% select(-si_arret_prednisone__m18_ttt, -date_inutile, -geste_3,-geste_4,-geste_5,-geste_6)
 
@@ -345,13 +382,13 @@ base_large <- base_large  %>% mutate_at(vars(base_large [,map_dbl(base_large ,~l
 
 
 vars_large_sans_date <- base_large %>% select(-n, -num_ligne_ttt, -contains("date")) %>% colnames
-vars_large_date <- c("annee_fin","mois_fin","jour_fin","annee_j0","mois_j0","jour_j0","annee_ps","mois_ps","jour_ps","annee_ppred","mois_ppred","jour_ppred","annee_pis","mois_pis","jour_pis","annee_pasp","mois_pasp","jour_pasp","annee_phta","mois_phta","jour_phta","annee_r1","mois_r1","jour_r1","annee_r2","mois_r2","jour_r2","annee_complic1","mois_complic1","jour_complic1","annee_g1","mois_g1","jour_g1","annee_g2","mois_g2","jour_g2","annee_dn","mois_dn","jour_dn")
+vars_large_date <- c("annee_fin","mois_fin","jour_fin","annee_j0","mois_j0","jour_j0","annee_ps","mois_ps","jour_ps","annee_ppred","mois_ppred","jour_ppred","annee_pis","mois_pis","jour_pis","annee_pasp","mois_pasp","jour_pasp","annee_phta","mois_phta","jour_phta","annee_r1","mois_r1","jour_r1","annee_r2","mois_r2","jour_r2","annee_complic1","mois_complic1","jour_complic1","annee_g1","mois_g1","jour_g1","annee_g2","mois_g2","jour_g2","annee_dn","mois_dn","jour_dn","annee_ppred_seuil","mois_ppred_seuil","jour_ppred_seuil" )
 
 vars_tot <- c(vars_large_sans_date, vars_large_date)
 
 
 base_large <- base_large   %>% 
-  mutate_at(vars(date_fin_ligne_therapeutique_ttt, date_j0_ttt, date_premiere_statine,date_premiere_prednisone, date_premiere_is, date_premiere_aspirine, date_premiere_antihta, date_rechute_1, date_rechute_2 ,date_complication_n_1, date_geste1, date_geste2, date_derniere_nouvelle_ttt), as.character) %>%
+  mutate_at(vars(date_fin_ligne_therapeutique_ttt, date_j0_ttt, date_premiere_statine,date_premiere_prednisone, date_premiere_is, date_premiere_aspirine, date_premiere_antihta, date_rechute_1, date_rechute_2 ,date_complication_n_1, date_geste1, date_geste2, date_derniere_nouvelle_ttt, date_premiere_prednisone_seuil ), as.character) %>%
   
   separate(date_fin_ligne_therapeutique_ttt, into = c("annee_fin","mois_fin","jour_fin"), sep = "-") %>% 
   separate(date_j0_ttt, into = c("annee_j0","mois_j0","jour_j0"), sep = "-") %>% 
@@ -366,6 +403,7 @@ base_large <- base_large   %>%
   separate(date_geste1, into = c("annee_g1","mois_g1","jour_g1"), sep = "-") %>%
   separate(date_geste2, into = c("annee_g2","mois_g2","jour_g2"), sep = "-") %>%
   separate(date_derniere_nouvelle_ttt, into = c("annee_dn","mois_dn","jour_dn"), sep = "-") %>%
+  separate(date_premiere_prednisone_seuil, into = c("annee_ppred_seuil","mois_ppred_seuil","jour_ppred_seuil"), sep = "-") %>%
   
   mutate(num_ligne_ttt = case_when(
     num_ligne_ttt==1~"ligne_1",
@@ -447,7 +485,13 @@ base_large <- base_large   %>%
          date_dn_ligne2 = str_c(annee_dn_ligne_2,mois_dn_ligne_2,jour_dn_ligne_2,sep="-"),
          date_dn_ligne3 = str_c(annee_dn_ligne_3,mois_dn_ligne_3,jour_dn_ligne_3,sep="-"),
          date_dn_ligne4 = str_c(annee_dn_ligne_4,mois_dn_ligne_4,jour_dn_ligne_4,sep="-"),
-         date_dn_ligne5 = str_c(annee_dn_ligne_5,mois_dn_ligne_5,jour_dn_ligne_5,sep="-")) %>% 
+         date_dn_ligne5 = str_c(annee_dn_ligne_5,mois_dn_ligne_5,jour_dn_ligne_5,sep="-"),
+         date_ppred_seuil_ligne1 = str_c(annee_ppred_seuil_ligne_1,mois_ppred_seuil_ligne_1,jour_ppred_seuil_ligne_1,sep="-"),
+         date_ppred_seuil_ligne2 = str_c(annee_ppred_seuil_ligne_2,mois_ppred_seuil_ligne_2,jour_ppred_seuil_ligne_2,sep="-"),
+         date_ppred_seuil_ligne3 = str_c(annee_ppred_seuil_ligne_3,mois_ppred_seuil_ligne_3,jour_ppred_seuil_ligne_3,sep="-"),
+         date_ppred_seuil_ligne4 = str_c(annee_ppred_seuil_ligne_4,mois_ppred_seuil_ligne_4,jour_ppred_seuil_ligne_4,sep="-"),
+         date_ppred_seuil_ligne5 = str_c(annee_ppred_seuil_ligne_5,mois_ppred_seuil_ligne_5,jour_ppred_seuil_ligne_5,sep="-")
+         ) %>% 
   select(-contains("annee"), -contains("mois"),-contains("jour"))
 
 # Les dates
@@ -470,7 +514,10 @@ base_large <- base_large %>%
     date_premiere_hta = pmin(date_phta_ligne1, date_phta_ligne2,date_phta_ligne3,date_phta_ligne4,date_phta_ligne5, na.rm = TRUE),
     date_premiere_complication1 = pmin(date_complic1_ligne1,date_complic1_ligne2,date_complic1_ligne3,date_complic1_ligne4,date_complic1_ligne5, na.rm = TRUE),
     date_premiere_geste1 = pmin(date_g1_ligne1, date_g1_ligne2,date_g1_ligne3,date_g1_ligne4,date_g1_ligne5, na.rm = TRUE),
-    date_premiere_geste2 = pmin(date_g2_ligne1, date_g2_ligne2,date_g2_ligne3,date_g2_ligne4,date_g2_ligne5, na.rm = TRUE))
+    date_premiere_geste2 = pmin(date_g2_ligne1, date_g2_ligne2,date_g2_ligne3,date_g2_ligne4,date_g2_ligne5, na.rm = TRUE),
+    date_premiere_prednisone_seuil = pmin(date_ppred_seuil_ligne1, date_ppred_seuil_ligne2,date_ppred_seuil_ligne3,date_ppred_seuil_ligne4,date_ppred_seuil_ligne5, na.rm = TRUE))
+
+
     
 ## Selection des variables dates que l'on veut garder
 var_date_ejection <- base_large %>% select(contains("date"), -date_j0, -date_fin,-date_derniere_nouvelle, -contains("premiere")) %>% colnames
@@ -563,7 +610,12 @@ base_large <- base_large %>%
     presence_geste2_essai2 = case_when(
       geste_2_ligne_1=="1"| geste_2_ligne_2=="1"| geste_2_ligne_3=="1"| geste_2_ligne_4=="1"|  geste_2_ligne_5=="1"~1,
       TRUE~0
-    ))
+    ),
+      presence_prednisone_seuil_essai2 = case_when(
+      presence_prednisone_seuil_ligne_1=="1"| presence_prednisone_seuil_ligne_2=="1"| presence_prednisone_seuil_ligne_3=="1"| presence_prednisone_seuil_ligne_4=="1"|  presence_prednisone_seuil_ligne_5=="1"~1,
+      TRUE ~ 0
+    )
+    )
 #### Comparaison Technique 1 et 2
 # ----> Les deux techniques donnent la meme chose donc le codage est bon. presence_essai2
 
@@ -583,7 +635,8 @@ base_large <- base_large%>%
     presence_is = "presence_is_essai2",
     presence_complication = "presence_complication1_essai2",
     presence_geste1 = "presence_geste1_essai2",
-    presence_geste2 = "presence_geste2_essai2"
+    presence_geste2 = "presence_geste2_essai2",
+    presence_prednisone_seuil = "presence_prednisone_seuil_essai2"
   )
 
 # On remet en facteur
@@ -591,6 +644,7 @@ base_large <- base_large%>%
 
 base_large %>% filter(n==35) %>% select(contains("date"))
 
+base_large %>% select(contains("seuil")) %>% names
 ```
 
 
@@ -603,5 +657,33 @@ bd_l <- plyr::join_all(list(base_large,bd_baseline),by = "n", type = "full")
 bd_l <- bd_l %>% 
   mutate_at(vars(date_naissance_baseline, date_diag_taka_baseline, date_dernieres_nouvelles_baseline ), ymd)
 
+```
+
+Creation OUTCOMES a notre base large 
+```{r}
+# OUTCOME = COMBINE_RISPRED = presence de rechute OU mise en place d'un IS Ou mise en place d'une dose de corticoïde>15mh/j
+base_large <- base_large %>% 
+  mutate (date_surv_combine_rispred = case_when(
+    presence_is==1&presence_prednisone_seuil==0&presence_rechute1==0 ~ date_premiere_is,
+    presence_is==0&presence_prednisone_seuil==1&presence_rechute1==0 ~ date_premiere_prednisone_seuil,
+    presence_is==0&presence_prednisone_seuil==0&presence_rechute1==1 ~ date_premiere_rechute1,
+    presence_is==1&presence_prednisone_seuil==1&presence_rechute1==0 ~ pmin(date_premiere_prednisone_seuil, date_premiere_is, na.rm=T),
+    presence_is==1&presence_prednisone_seuil==0&presence_rechute1==1 ~ pmin(date_premiere_rechute1, date_premiere_is, na.rm=T),
+    presence_is==0&presence_prednisone_seuil==1&presence_rechute1==1 ~ pmin(date_premiere_prednisone_seuil, date_premiere_rechute1, na.rm=T),
+    presence_is==1&presence_prednisone_seuil==1&presence_rechute1==1 ~ pmin(date_premiere_prednisone_seuil, date_premiere_rechute1, date_premiere_is, na.rm=T),
+    TRUE ~ date_derniere_nouvelle
+  ) ) %>% 
+  mutate(surv_combine_rispred = ifelse(presence_is==1|presence_prednisone_seuil==1|presence_rechute1==1,1,0))
+
+base_large <- base_large  %>% 
+  mutate(time_s_combine_rispred = date_surv_combine_rispred - date_j0) %>% 
+  mutate(time_s_combine_rispred = as.numeric(time_s_combine_rispred))
+
+# donnees manquantes
+#base_large[which(is.na(base_large$time_s_combine_rispred)),] %>% select(n, date_j0, presence_rechute1,date_premiere_rechute1, presence_is, date_premiere_is, presence_prednisone_seuil, date_premiere_prednisone_seuil, date_derniere_nouvelle, time_s_combine_rispred)
+
+
+# OUTCOME = apparition d'un geste vasculaire OU d'une complication
+base_large %>% select(contains("ges"), contains("compl")) %>% names
 ```
 
